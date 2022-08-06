@@ -17,6 +17,11 @@ static_assert(sizeof(ImDrawIdx) == 4);
 
 QT_BEGIN_NAMESPACE
 
+// allow mapping the range Qt::Key_Escape..Qt::Key_PageDown
+#define FIRSTSPECKEY (0x01000000)
+#define LASTSPECKEY (0x01000017)
+#define MAPSPECKEY(k) ((k) - FIRSTSPECKEY + 256)
+
 struct QRhiImguiItemPrivate
 {
     QRhiImguiItem *q;
@@ -30,9 +35,6 @@ struct QRhiImguiItemPrivate
     Qt::MouseButtons mouseButtonsDown = Qt::NoButton;
     float mouseWheel = 0;
     Qt::KeyboardModifiers modifiers = Qt::NoModifier;
-    #define FIRSTSPECKEY (0x01000000)
-    #define LASTSPECKEY (0x01000017)
-    #define MAPSPECKEY(k) ((k) - FIRSTSPECKEY + 256)
     bool keyDown[256 + (LASTSPECKEY - FIRSTSPECKEY + 1)] = {};
     QString keyText;
 
@@ -194,6 +196,7 @@ void QRhiImguiItemPrivate::updateInput(const QPointF &logicalOffset, float dpr)
         io.KeyMap[ImGuiKey_Enter] = MAPSPECKEY(Qt::Key_Return);
         io.KeyMap[ImGuiKey_Escape] = MAPSPECKEY(Qt::Key_Escape);
 
+        // just to make Ctrl+A and such working, should be extended
         io.KeyMap[ImGuiKey_A] = Qt::Key_A;
         io.KeyMap[ImGuiKey_C] = Qt::Key_C;
         io.KeyMap[ImGuiKey_V] = Qt::Key_V;
