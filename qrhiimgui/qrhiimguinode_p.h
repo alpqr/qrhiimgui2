@@ -21,8 +21,6 @@ public:
     void render(const RenderState *state) override;
     void releaseResources() override;
     StateFlags changedStates() const override;
-    RenderingFlags flags() const override;
-    QRectF rect() const override;
 
     void doReleaseResources();
 
@@ -52,7 +50,6 @@ public:
 
     QQuickWindow *m_window;
     QRhi *m_rhi = nullptr;
-    QSizeF m_itemSize;
     QRhiRenderTarget *m_rt = nullptr;
     QRhiCommandBuffer *m_cb = nullptr;
     QSize m_lastOutputSize;

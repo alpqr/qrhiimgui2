@@ -78,9 +78,7 @@ QSGNode *QRhiImguiItem::updatePaintNode(QSGNode *node, QQuickItem::UpdatePaintNo
     if (!n)
         n = new QRhiImguiNode(d->window);
 
-    n->m_itemSize = size();
     n->f = d->f;
-
     n->markDirty(QSGNode::DirtyMaterial);
     return n;
 }

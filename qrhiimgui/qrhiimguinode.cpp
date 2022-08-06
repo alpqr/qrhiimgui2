@@ -226,14 +226,4 @@ QSGRenderNode::StateFlags QRhiImguiNode::changedStates() const
     return DepthState | ScissorState | ColorState | BlendState | CullState | ViewportState;
 }
 
-QSGRenderNode::RenderingFlags QRhiImguiNode::flags() const
-{
-    return {};
-}
-
-QRectF QRhiImguiNode::rect() const
-{
-    return QRect(0, 0, m_itemSize.width(), m_itemSize.height());
-}
-
 QT_END_NAMESPACE
