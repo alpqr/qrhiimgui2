@@ -12,11 +12,9 @@ class ImguiItem : public QRhiImguiItem
     QML_NAMED_ELEMENT(Imgui)
 
 public:
-    void synchronize() override;
     void frame() override;
 
 private:
-    bool m_showDemoWindow = true;
 };
 
 #endif

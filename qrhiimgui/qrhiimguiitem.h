@@ -8,6 +8,8 @@
 
 QT_BEGIN_NAMESPACE
 
+struct QRhiImguiItemPrivate;
+
 class QRhiImguiItem : public QQuickItem
 {
     Q_OBJECT
@@ -16,12 +18,6 @@ public:
     QRhiImguiItem(QQuickItem *parent = nullptr);
     ~QRhiImguiItem();
 
-    // Called on the render thread with main thread blocked to allow copying
-    // data from main thread data structures.
-    virtual void synchronize();
-
-    // Called on the render thread, this is where the ImGui UI should be
-    // generated based on the data stored in synchronize().
     virtual void frame();
 
 private:
@@ -38,9 +34,7 @@ private:
     void hoverMoveEvent(QHoverEvent *event) override;
     void touchEvent(QTouchEvent *event) override;
 
-    QQuickWindow *m_window = nullptr;
-    QMetaObject::Connection m_windowConn;
-    QObject m_dummy;
+    QRhiImguiItemPrivate *d;
 };
 
 QT_END_NAMESPACE

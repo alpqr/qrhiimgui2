@@ -4,11 +4,12 @@
 #include "imguiitem.h"
 #include "imgui.h"
 
-void ImguiItem::synchronize()
-{
-}
-
 void ImguiItem::frame()
 {
-    ImGui::ShowDemoWindow(&m_showDemoWindow);
+    QRhiImguiItem::frame(); // demo window, no need to call it if that's not wanted
+
+    ImGui::SetNextWindowPos(ImVec2(200, 300), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(400, 300), ImGuiCond_FirstUseEver);
+    ImGui::Begin("Test");
+    ImGui::End();
 }

@@ -6,36 +6,29 @@ Item {
     Rectangle {
         color: "red"
         anchors.fill: parent
-        Rectangle {
-            color: "lightGray"
-            // for testing only, this is not intended to be 100% usable in practice
-//            width: 1000
-//            height: 600
-//            anchors.centerIn: parent
-//            border.color: "green"
-//            border.width: 4
-
-            // this is the intended usage, covering the whole screen (and so input matches 1:1)
+        Imgui {
+            id: gui
             anchors.fill: parent
-
-            Imgui {
-                id: gui
+        }
+        Rectangle {
+            border.width: 2
+            border.color: black
+            y: 50
+            width: 400
+            height: 50
+            clip: true
+            TextEdit {
+                id: textEdit
                 anchors.fill: parent
+                text: "TextEdit to test focus"
+                font.pointSize: 20
+                color: "blue"
             }
         }
         Button {
             y: 20
             text: "Toggle"
             onClicked: gui.visible = !gui.visible
-        }
-        TextEdit {
-            id: textEdit
-            x: 100
-            y: 20
-            width: 500
-            text: "focus test"
-            font.pointSize: 20
-            color: "blue"
         }
     }
 }
