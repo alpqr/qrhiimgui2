@@ -32,15 +32,13 @@ public:
 
     struct DrawCmd {
         int cmdListBufferIdx;
-        quint32 indexOffset;
         int textureIndex;
-        QPoint scissorBottomLeft;
-        QSize scissorSize;
+        quint32 indexOffset;
         quint32 elemCount;
+        QVector4D clipRect;
     };
 
     struct StaticRenderData {
-        QMatrix4x4 mvp;
         QImage fontTextureData;
     };
 
@@ -50,13 +48,14 @@ public:
         QVarLengthArray<CmdListBuffer, 4> vbuf;
         QVarLengthArray<CmdListBuffer, 4> ibuf;
         QVarLengthArray<DrawCmd, 4> draw;
+        QSize outputPixelSize;
     };
 
     QQuickWindow *m_window;
     QRhi *m_rhi = nullptr;
     QRhiRenderTarget *m_rt = nullptr;
     QRhiCommandBuffer *m_cb = nullptr;
-    QSize m_lastOutputSize;
+    QSize m_lastOutputPixelSize;
     float m_lastOpacity;
     StaticRenderData sf;
     FrameRenderData f;

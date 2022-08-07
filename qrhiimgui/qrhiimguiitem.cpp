@@ -27,7 +27,6 @@ struct QRhiImguiItemPrivate
     QRhiImguiItem *q;
     QQuickWindow *window = nullptr;
     QMetaObject::Connection windowConn;
-    QSize lastOutputSize;
     QRhiImguiNode::StaticRenderData sf;
     QRhiImguiNode::FrameRenderData f;
 
@@ -43,7 +42,7 @@ struct QRhiImguiItemPrivate
 
     QRhiImguiItemPrivate(QRhiImguiItem *item) : q(item) { }
     void nextImguiFrame();
-    void updateInput(const QPointF &logicalOffset, float dpr);
+    void updateInput();
     void processEvent(QEvent *event);
 };
 
@@ -75,6 +74,11 @@ QSGNode *QRhiImguiItem::updatePaintNode(QSGNode *node, QQuickItem::UpdatePaintNo
 {
     // render thread, with main thread blocked
 
+    if (size().isEmpty()) {
+        delete node;
+        return nullptr;
+    }
+
     QRhiImguiNode *n = static_cast<QRhiImguiNode *>(node);
     if (!n)
         n = new QRhiImguiNode(d->window);
@@ -97,7 +101,7 @@ void QRhiImguiItem::itemChange(QQuickItem::ItemChange change, const QQuickItem::
             d->window = window();
             d->windowConn = connect(d->window, &QQuickWindow::afterAnimating, d->window, [this] {
                 if (isVisible()) {
-                    d->updateInput(mapToScene(QPointF(0, 0)), d->window->effectiveDevicePixelRatio());
+                    d->updateInput();
                     d->nextImguiFrame();
                     update();
                 }
@@ -110,22 +114,21 @@ void QRhiImguiItemPrivate::nextImguiFrame()
 {
     ImGuiIO &io(ImGui::GetIO());
 
-    const QSize outputSize = (q->size() * window->effectiveDevicePixelRatio()).toSize();
-    io.DisplaySize.x = outputSize.width();
-    io.DisplaySize.y = outputSize.height();
-    io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
+    const float dpr = window->effectiveDevicePixelRatio();
+    f.outputPixelSize = (q->size() * dpr).toSize();
+    const QPointF itemPixelOffset = q->mapToScene(QPointF(0, 0)) * dpr;
+
+    io.DisplaySize.x = q->width();
+    io.DisplaySize.y = q->height();
+    io.DisplayFramebufferScale = ImVec2(dpr, dpr);
 
     ImGui::NewFrame();
     q->frame();
     ImGui::Render();
 
-    if (lastOutputSize != outputSize) {
-        sf.mvp = QMatrix4x4();
-        sf.mvp.ortho(0, io.DisplaySize.x, io.DisplaySize.y, 0, 1, -1);
-        lastOutputSize = outputSize;
-    }
-
     ImDrawData *draw = ImGui::GetDrawData();
+    draw->ScaleClipRects(ImVec2(dpr, dpr));
+
     f.vbuf.resize(draw->CmdListsCount);
     f.ibuf.resize(draw->CmdListsCount);
     f.totalVbufSize = 0;
@@ -151,19 +154,13 @@ void QRhiImguiItemPrivate::nextImguiFrame()
             const ImDrawCmd *cmd = &cmdList->CmdBuffer[i];
             const quint32 indexOffset = f.ibuf[n].offset + quintptr(indexBufOffset);
             if (!cmd->UserCallback) {
-                QPoint sp = QPointF(cmd->ClipRect.x, outputSize.height() - cmd->ClipRect.w).toPoint();
-                QSize ss = QSizeF(cmd->ClipRect.z - cmd->ClipRect.x, cmd->ClipRect.w - cmd->ClipRect.y).toSize();
-                sp.setX(qMax(0, sp.x()));
-                sp.setY(qMax(0, sp.y()));
-                ss.setWidth(qMin(outputSize.width(), ss.width()));
-                ss.setHeight(qMin(outputSize.height(), ss.height()));
                 QRhiImguiNode::DrawCmd dc;
                 dc.cmdListBufferIdx = n;
-                dc.indexOffset = indexOffset;
                 dc.textureIndex = int(reinterpret_cast<qintptr>(cmd->TextureId));
-                dc.scissorBottomLeft = sp;
-                dc.scissorSize = ss;
+                dc.indexOffset = indexOffset;
                 dc.elemCount = cmd->ElemCount;
+                dc.clipRect = QVector4D(cmd->ClipRect.x + itemPixelOffset.x(), cmd->ClipRect.y + itemPixelOffset.y(),
+                                        cmd->ClipRect.z + itemPixelOffset.x(), cmd->ClipRect.w + itemPixelOffset.y());
                 f.draw.append(dc);
             } else {
                 cmd->UserCallback(cmdList, cmd);
@@ -173,7 +170,7 @@ void QRhiImguiItemPrivate::nextImguiFrame()
     }
 }
 
-void QRhiImguiItemPrivate::updateInput(const QPointF &logicalOffset, float dpr)
+void QRhiImguiItemPrivate::updateInput()
 {
     if (!ImGui::GetCurrentContext())
         return;
@@ -206,8 +203,7 @@ void QRhiImguiItemPrivate::updateInput(const QPointF &logicalOffset, float dpr)
         io.KeyMap[ImGuiKey_Z] = Qt::Key_Z;
     }
 
-    const QPointF pos = (mousePos + logicalOffset) * dpr;
-    io.MousePos = ImVec2(pos.x(), pos.y());
+    io.MousePos = ImVec2(mousePos.x(), mousePos.y());
 
     io.MouseDown[0] = mouseButtonsDown.testFlag(Qt::LeftButton);
     io.MouseDown[1] = mouseButtonsDown.testFlag(Qt::RightButton);

@@ -8,12 +8,6 @@
 
 QT_BEGIN_NAMESPACE
 
-// QSGRenderNode::projectionMatrix() is only in 6.5+, earlier versions only
-// have it in the RenderState and that's not available in prepare()
-#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
-#define WELL_BEHAVING_DEPTH 1
-#endif
-
 static QShader getShader(const QString &name)
 {
     QFile f(name);
@@ -105,7 +99,7 @@ void QRhiImguiNode::prepare()
         m_ubuf->setName(QByteArrayLiteral("imgui uniform buffer"));
         if (!m_ubuf->create())
             return;
-        m_lastOutputSize = QSize();
+        m_lastOutputPixelSize = QSize();
         m_lastOpacity = inheritedOpacity();
         u->updateDynamicBuffer(m_ubuf.get(), 64, 4, &m_lastOpacity);
     }
@@ -116,15 +110,9 @@ void QRhiImguiNode::prepare()
     for (const CmdListBuffer &b : f.ibuf)
         u->updateDynamicBuffer(m_ibuf.get(), b.offset, b.data.size(), b.data.constData());
 
-    const QSize outputSize = m_rt->pixelSize();
-    if (m_lastOutputSize != outputSize) {
-        m_lastOutputSize = outputSize;
-        QMatrix4x4 mvp = m_rhi->clipSpaceCorrMatrix() * sf.mvp;
-#if WELL_BEHAVING_DEPTH
-        const QMatrix4x4 *pm = projectionMatrix(); // also orthographic
-        mvp(2, 2) = (*pm)(2, 2);
-        mvp(2, 3) = (*pm)(2, 3);
-#endif
+    if (m_lastOutputPixelSize != f.outputPixelSize) {
+        m_lastOutputPixelSize = f.outputPixelSize;
+        const QMatrix4x4 mvp = *projectionMatrix() * *matrix();
         u->updateDynamicBuffer(m_ubuf.get(), 0, 64, mvp.constData());
     }
 
@@ -221,17 +209,22 @@ void QRhiImguiNode::render(const RenderState *)
 
     m_cb->setGraphicsPipeline(m_ps.get());
 
-    const QSize outputSize = m_rt->pixelSize();
+    const QSize viewportSize = m_rt->pixelSize();
     bool needsViewport = true;
 
     for (const DrawCmd &c : f.draw) {
         QRhiCommandBuffer::VertexInput vbufBinding(m_vbuf.get(), f.vbuf[c.cmdListBufferIdx].offset);
         if (needsViewport) {
             needsViewport = false;
-            m_cb->setViewport({ 0, 0, float(outputSize.width()), float(outputSize.height()) });
+            m_cb->setViewport({ 0, 0, float(viewportSize.width()), float(viewportSize.height()) });
         }
-        m_cb->setScissor({ c.scissorBottomLeft.x(), c.scissorBottomLeft.y(),
-                           c.scissorSize.width(), c.scissorSize.height() });
+        QPoint scissorPos = QPointF(c.clipRect.x(), viewportSize.height() - c.clipRect.w()).toPoint();
+        QSize scissorSize = QSizeF(c.clipRect.z() - c.clipRect.x(), c.clipRect.w() - c.clipRect.y()).toSize();
+        scissorPos.setX(qMax(0, scissorPos.x()));
+        scissorPos.setY(qMax(0, scissorPos.y()));
+        scissorSize.setWidth(qMin(viewportSize.width(), scissorSize.width()));
+        scissorSize.setHeight(qMin(viewportSize.height(), scissorSize.height()));
+        m_cb->setScissor({ scissorPos.x(), scissorPos.y(), scissorSize.width(), scissorSize.height() });
         m_cb->setShaderResources(m_textures[c.textureIndex].srb);
         m_cb->setVertexInput(0, 1, &vbufBinding, m_ibuf.get(), c.indexOffset, QRhiCommandBuffer::IndexUInt32);
         m_cb->drawIndexed(c.elemCount);
@@ -253,9 +246,7 @@ QSGRenderNode::RenderingFlags QRhiImguiNode::flags() const
     // report DepthAwareRendering and so QQ will not disable the opaque pass.
     // (otherwise a visible QRhiImguiNode forces all batches to be part of the
     // back-to-front no-depth-write pass -> less optimal)
-#if WELL_BEHAVING_DEPTH
     result |= DepthAwareRendering;
-#endif
 
     return result;
 }
