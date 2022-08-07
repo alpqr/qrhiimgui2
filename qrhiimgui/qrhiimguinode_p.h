@@ -21,6 +21,7 @@ public:
     void render(const RenderState *state) override;
     void releaseResources() override;
     StateFlags changedStates() const override;
+    RenderingFlags flags() const override;
 
     void doReleaseResources();
 

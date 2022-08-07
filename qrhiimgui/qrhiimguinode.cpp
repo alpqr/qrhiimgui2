@@ -8,6 +8,12 @@
 
 QT_BEGIN_NAMESPACE
 
+// QSGRenderNode::projectionMatrix() is only in 6.5+, earlier versions only
+// have it in the RenderState and that's not available in prepare()
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+#define WELL_BEHAVING_DEPTH 1
+#endif
+
 static QShader getShader(const QString &name)
 {
     QFile f(name);
@@ -113,7 +119,12 @@ void QRhiImguiNode::prepare()
     const QSize outputSize = m_rt->pixelSize();
     if (m_lastOutputSize != outputSize) {
         m_lastOutputSize = outputSize;
-        const QMatrix4x4 mvp = m_rhi->clipSpaceCorrMatrix() * f.mvp;
+        QMatrix4x4 mvp = m_rhi->clipSpaceCorrMatrix() * f.mvp;
+#if WELL_BEHAVING_DEPTH
+        const QMatrix4x4 *pm = projectionMatrix(); // also orthographic
+        mvp(2, 2) = (*pm)(2, 2);
+        mvp(2, 3) = (*pm)(2, 3);
+#endif
         u->updateDynamicBuffer(m_ubuf.get(), 0, 64, mvp.constData());
     }
 
@@ -224,6 +235,23 @@ void QRhiImguiNode::render(const RenderState *)
 QSGRenderNode::StateFlags QRhiImguiNode::changedStates() const
 {
     return DepthState | ScissorState | ColorState | BlendState | CullState | ViewportState;
+}
+
+QSGRenderNode::RenderingFlags QRhiImguiNode::flags() const
+{
+    // Don't want rhi->begin/endExternal() to be called by Quick since we work
+    // with QRhi.
+    QSGRenderNode::RenderingFlags result = NoExternalRendering;
+
+    // If we take the projectionMatrix() adjustments into account then can
+    // report DepthAwareRendering and so QQ will not disable the opaque pass.
+    // (otherwise a visible QRhiImguiNode forces all batches to be part of the
+    // back-to-front no-depth-write pass -> less optimal)
+#if WELL_BEHAVING_DEPTH
+    result |= DepthAwareRendering;
+#endif
+
+    return result;
 }
 
 QT_END_NAMESPACE
