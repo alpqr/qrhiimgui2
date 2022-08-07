@@ -156,6 +156,11 @@ void QRhiImguiNode::prepare()
         }
     }
 
+    // If layer.enabled is toggled on the item or an ancestor, the render
+    // target is then suddenly different and may not be compatible.
+    if (m_ps && m_rt->renderPassDescriptor()->serializedFormat() != m_renderPassFormat)
+        m_ps.reset();
+
     if (!m_ps) {
         m_ps.reset(m_rhi->newGraphicsPipeline());
         QRhiGraphicsPipeline::TargetBlend blend;
@@ -194,6 +199,7 @@ void QRhiImguiNode::prepare()
         m_ps->setVertexInputLayout(inputLayout);
         m_ps->setShaderResourceBindings(m_textures[0].srb);
         m_ps->setRenderPassDescriptor(m_rt->renderPassDescriptor());
+        m_renderPassFormat = m_rt->renderPassDescriptor()->serializedFormat();
 
         if (!m_ps->create())
             return;

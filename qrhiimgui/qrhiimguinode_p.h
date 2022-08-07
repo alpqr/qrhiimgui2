@@ -64,6 +64,7 @@ public:
     std::unique_ptr<QRhiBuffer> m_ibuf;
     std::unique_ptr<QRhiBuffer> m_ubuf;
     std::unique_ptr<QRhiGraphicsPipeline> m_ps;
+    QVector<quint32> m_renderPassFormat;
     std::unique_ptr<QRhiSampler> m_sampler;
 
     struct Texture {
