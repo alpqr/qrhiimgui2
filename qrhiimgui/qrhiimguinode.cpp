@@ -119,7 +119,7 @@ void QRhiImguiNode::prepare()
     const QSize outputSize = m_rt->pixelSize();
     if (m_lastOutputSize != outputSize) {
         m_lastOutputSize = outputSize;
-        QMatrix4x4 mvp = m_rhi->clipSpaceCorrMatrix() * f.mvp;
+        QMatrix4x4 mvp = m_rhi->clipSpaceCorrMatrix() * sf.mvp;
 #if WELL_BEHAVING_DEPTH
         const QMatrix4x4 *pm = projectionMatrix(); // also orthographic
         mvp(2, 2) = (*pm)(2, 2);
@@ -138,7 +138,7 @@ void QRhiImguiNode::prepare()
 
     if (m_textures.isEmpty()) {
         Texture fontTex;
-        fontTex.image = f.fontTextureData;
+        fontTex.image = sf.fontTextureData;
         m_textures.append(fontTex);
     }
 

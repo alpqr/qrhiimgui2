@@ -28,6 +28,7 @@ struct QRhiImguiItemPrivate
     QQuickWindow *window = nullptr;
     QMetaObject::Connection windowConn;
     QSize lastOutputSize;
+    QRhiImguiNode::StaticRenderData sf;
     QRhiImguiNode::FrameRenderData f;
 
     bool inputInitialized = false;
@@ -60,7 +61,7 @@ QRhiImguiItem::QRhiImguiItem(QQuickItem *parent)
     int w, h;
     io.Fonts->GetTexDataAsRGBA32(&pixels, &w, &h);
     const QImage wrapperImg(const_cast<const uchar *>(pixels), w, h, QImage::Format_RGBA8888);
-    d->f.fontTextureData = wrapperImg.copy();
+    d->sf.fontTextureData = wrapperImg.copy();
     io.Fonts->SetTexID(reinterpret_cast<ImTextureID>(quintptr(0)));
 }
 
@@ -78,7 +79,9 @@ QSGNode *QRhiImguiItem::updatePaintNode(QSGNode *node, QQuickItem::UpdatePaintNo
     if (!n)
         n = new QRhiImguiNode(d->window);
 
-    n->f = d->f;
+    n->sf = d->sf;
+    n->f = std::move(d->f);
+
     n->markDirty(QSGNode::DirtyMaterial);
     return n;
 }
@@ -117,8 +120,8 @@ void QRhiImguiItemPrivate::nextImguiFrame()
     ImGui::Render();
 
     if (lastOutputSize != outputSize) {
-        f.mvp = QMatrix4x4();
-        f.mvp.ortho(0, io.DisplaySize.x, io.DisplaySize.y, 0, 1, -1);
+        sf.mvp = QMatrix4x4();
+        sf.mvp.ortho(0, io.DisplaySize.x, io.DisplaySize.y, 0, 1, -1);
         lastOutputSize = outputSize;
     }
 

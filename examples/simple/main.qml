@@ -12,7 +12,7 @@ Item {
         }
         Rectangle {
             border.width: 2
-            border.color: black
+            border.color: "black"
             y: 50
             width: 400
             height: 50

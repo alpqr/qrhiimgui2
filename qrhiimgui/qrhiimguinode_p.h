@@ -39,14 +39,17 @@ public:
         quint32 elemCount;
     };
 
-    struct FrameRenderData {
+    struct StaticRenderData {
         QMatrix4x4 mvp;
         QImage fontTextureData;
+    };
+
+    struct FrameRenderData {
         quint32 totalVbufSize = 0;
         quint32 totalIbufSize = 0;
-        QVector<CmdListBuffer> vbuf;
-        QVector<CmdListBuffer> ibuf;
-        QVector<DrawCmd> draw;
+        QVarLengthArray<CmdListBuffer, 4> vbuf;
+        QVarLengthArray<CmdListBuffer, 4> ibuf;
+        QVarLengthArray<DrawCmd, 4> draw;
     };
 
     QQuickWindow *m_window;
@@ -54,6 +57,7 @@ public:
     QRhiRenderTarget *m_rt = nullptr;
     QRhiCommandBuffer *m_cb = nullptr;
     QSize m_lastOutputSize;
+    StaticRenderData sf;
     FrameRenderData f;
 
     std::unique_ptr<QRhiBuffer> m_vbuf;
