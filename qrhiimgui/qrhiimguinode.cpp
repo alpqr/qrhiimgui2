@@ -105,9 +105,9 @@ void QRhiImguiNode::prepare()
         m_ubuf->setName(QByteArrayLiteral("imgui uniform buffer"));
         if (!m_ubuf->create())
             return;
-        float opacity = 1.0f;
-        u->updateDynamicBuffer(m_ubuf.get(), 64, 4, &opacity);
         m_lastOutputSize = QSize();
+        m_lastOpacity = inheritedOpacity();
+        u->updateDynamicBuffer(m_ubuf.get(), 64, 4, &m_lastOpacity);
     }
 
     for (const CmdListBuffer &b : f.vbuf)
@@ -126,6 +126,12 @@ void QRhiImguiNode::prepare()
         mvp(2, 3) = (*pm)(2, 3);
 #endif
         u->updateDynamicBuffer(m_ubuf.get(), 0, 64, mvp.constData());
+    }
+
+    const float opacity = inheritedOpacity();
+    if (m_lastOpacity != opacity) {
+        m_lastOpacity = opacity;
+        u->updateDynamicBuffer(m_ubuf.get(), 64, 4, &m_lastOpacity);
     }
 
     if (!m_sampler) {
