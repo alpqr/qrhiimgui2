@@ -167,9 +167,8 @@ void QRhiImguiNode::prepare()
         blend.enable = true;
         blend.srcColor = QRhiGraphicsPipeline::SrcAlpha;
         blend.dstColor = QRhiGraphicsPipeline::OneMinusSrcAlpha;
-        blend.srcAlpha = QRhiGraphicsPipeline::One;
+        blend.srcAlpha = QRhiGraphicsPipeline::OneMinusSrcAlpha;
         blend.dstAlpha = QRhiGraphicsPipeline::Zero;
-        blend.colorWrite = QRhiGraphicsPipeline::R | QRhiGraphicsPipeline::G | QRhiGraphicsPipeline::B;
         m_ps->setTargetBlends({ blend });
         m_ps->setCullMode(QRhiGraphicsPipeline::None);
         m_ps->setDepthTest(true);

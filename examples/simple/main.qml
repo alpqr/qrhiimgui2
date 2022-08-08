@@ -9,7 +9,7 @@ Item {
         anchors.fill: parent
         Rectangle {
             id: imguiContainer
-            property bool fullWin: false
+            property bool fullWin: true
             property bool useTex: false
             layer.enabled: useTex
             color: "transparent"
@@ -19,9 +19,21 @@ Item {
             height: fullWin ? parent.height : parent.height - 400
             x: fullWin ? 0 : 100
             y: fullWin ? 0 : 100
+            z: ztimer.running ? 1 : 0
             Imgui {
                 id: gui
                 anchors.fill: parent
+                SequentialAnimation on opacity {
+                    id: opacityAnim
+                    running: false
+                    NumberAnimation { from: 1; to: 0; duration: 3000 }
+                    NumberAnimation { from: 0; to: 1; duration: 3000 }
+                }
+            }
+            Timer {
+                id: ztimer
+                repeat: false
+                interval: 10000
             }
         }
         Rectangle {
@@ -50,9 +62,17 @@ Item {
                 onClicked: imguiContainer.fullWin = !imguiContainer.fullWin
             }
             Button {
-                text: "Toggle layer"
-                onClicked: imguiContainer.useTex = !imguiContainer.useTex
+                text: "Animate opacity"
+                onClicked: opacityAnim.running = true
             }
+            Button {
+                text: "Move to top for 10 sec"
+                onClicked: ztimer.running = true
+            }
+//            Button {
+//                text: "Toggle layer"
+//                onClicked: imguiContainer.useTex = !imguiContainer.useTex
+//            }
         }
     }
 }
