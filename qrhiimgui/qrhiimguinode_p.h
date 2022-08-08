@@ -35,6 +35,7 @@ public:
         int textureIndex;
         quint32 indexOffset;
         quint32 elemCount;
+        QPointF itemPixelOffset;
         QVector4D clipRect;
     };
 

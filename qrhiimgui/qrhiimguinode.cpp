@@ -227,8 +227,12 @@ void QRhiImguiNode::render(const RenderState *)
             needsViewport = false;
             m_cb->setViewport({ 0, 0, float(viewportSize.width()), float(viewportSize.height()) });
         }
-        QPoint scissorPos = QPointF(c.clipRect.x(), viewportSize.height() - c.clipRect.w()).toPoint();
-        QSize scissorSize = QSizeF(c.clipRect.z() - c.clipRect.x(), c.clipRect.w() - c.clipRect.y()).toSize();
+        const float sx1 = c.clipRect.x() + c.itemPixelOffset.x();
+        const float sy1 = c.clipRect.y() + c.itemPixelOffset.y();
+        const float sx2 = c.clipRect.z() + c.itemPixelOffset.x();
+        const float sy2 = c.clipRect.w() + c.itemPixelOffset.y();
+        QPoint scissorPos = QPointF(sx1, viewportSize.height() - sy2).toPoint();
+        QSize scissorSize = QSizeF(sx2 - sx1, sy2 - sy1).toSize();
         scissorPos.setX(qMax(0, scissorPos.x()));
         scissorPos.setY(qMax(0, scissorPos.y()));
         scissorSize.setWidth(qMin(viewportSize.width(), scissorSize.width()));

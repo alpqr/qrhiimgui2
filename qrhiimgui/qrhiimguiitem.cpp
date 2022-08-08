@@ -159,8 +159,8 @@ void QRhiImguiItemPrivate::nextImguiFrame()
                 dc.textureIndex = int(reinterpret_cast<qintptr>(cmd->TextureId));
                 dc.indexOffset = indexOffset;
                 dc.elemCount = cmd->ElemCount;
-                dc.clipRect = QVector4D(cmd->ClipRect.x + itemPixelOffset.x(), cmd->ClipRect.y + itemPixelOffset.y(),
-                                        cmd->ClipRect.z + itemPixelOffset.x(), cmd->ClipRect.w + itemPixelOffset.y());
+                dc.itemPixelOffset = itemPixelOffset;
+                dc.clipRect = QVector4D(cmd->ClipRect.x, cmd->ClipRect.y, cmd->ClipRect.z, cmd->ClipRect.w);
                 f.draw.append(dc);
             } else {
                 cmd->UserCallback(cmdList, cmd);
