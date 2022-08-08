@@ -70,7 +70,7 @@ Item {
                 onClicked: ztimer.running = true
             }
             Button {
-                text: "Toggle layer"
+                text: "Toggle layer (full size only)"
                 onClicked: imguiContainer.useTex = !imguiContainer.useTex
             }
         }

@@ -56,8 +56,6 @@ public:
     QRhi *m_rhi = nullptr;
     QRhiRenderTarget *m_rt = nullptr;
     QRhiCommandBuffer *m_cb = nullptr;
-    QSize m_lastOutputPixelSize;
-    float m_lastOpacity;
     StaticRenderData sf;
     FrameRenderData f;
 

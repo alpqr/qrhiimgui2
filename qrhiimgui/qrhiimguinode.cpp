@@ -99,9 +99,6 @@ void QRhiImguiNode::prepare()
         m_ubuf->setName(QByteArrayLiteral("imgui uniform buffer"));
         if (!m_ubuf->create())
             return;
-        m_lastOutputPixelSize = QSize();
-        m_lastOpacity = inheritedOpacity();
-        u->updateDynamicBuffer(m_ubuf.get(), 64, 4, &m_lastOpacity);
     }
 
     for (const CmdListBuffer &b : f.vbuf)
@@ -110,17 +107,10 @@ void QRhiImguiNode::prepare()
     for (const CmdListBuffer &b : f.ibuf)
         u->updateDynamicBuffer(m_ibuf.get(), b.offset, b.data.size(), b.data.constData());
 
-    if (m_lastOutputPixelSize != f.outputPixelSize) {
-        m_lastOutputPixelSize = f.outputPixelSize;
-        const QMatrix4x4 mvp = *projectionMatrix() * *matrix();
-        u->updateDynamicBuffer(m_ubuf.get(), 0, 64, mvp.constData());
-    }
-
+    const QMatrix4x4 mvp = *projectionMatrix() * *matrix();
+    u->updateDynamicBuffer(m_ubuf.get(), 0, 64, mvp.constData());
     const float opacity = inheritedOpacity();
-    if (m_lastOpacity != opacity) {
-        m_lastOpacity = opacity;
-        u->updateDynamicBuffer(m_ubuf.get(), 64, 4, &m_lastOpacity);
-    }
+    u->updateDynamicBuffer(m_ubuf.get(), 64, 4, &opacity);
 
     if (!m_sampler) {
         m_sampler.reset(m_rhi->newSampler(QRhiSampler::Linear, QRhiSampler::Linear, QRhiSampler::None,
