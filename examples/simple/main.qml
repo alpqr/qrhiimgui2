@@ -69,10 +69,19 @@ Item {
                 text: "Move to top for 10 sec"
                 onClicked: ztimer.running = true
             }
-//            Button {
-//                text: "Toggle layer"
-//                onClicked: imguiContainer.useTex = !imguiContainer.useTex
-//            }
+            Button {
+                text: "Toggle layer"
+                onClicked: imguiContainer.useTex = !imguiContainer.useTex
+            }
+        }
+    }
+    Column {
+        anchors.right: parent.right
+        Text {
+            text: "ImGui item visible: " + gui.visible
+                  + "\ncovers entire window: " + imguiContainer.fullWin
+                  + "\npart of an Item layer: " + imguiContainer.useTex
+                  + "\nstacks on top of buttons/textedit: " + ztimer.running
         }
     }
 }

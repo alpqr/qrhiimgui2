@@ -15,5 +15,7 @@ layout(binding = 1) uniform sampler2D tex;
 void main()
 {
     vec4 c = v_color * texture(tex, v_texcoord);
-    fragColor = vec4(c.rgb, c.a * opacity);
+    c.a *= opacity;
+    c.rgb *= c.a;
+    fragColor = c;
 }

@@ -165,10 +165,14 @@ void QRhiImguiNode::prepare()
         m_ps.reset(m_rhi->newGraphicsPipeline());
         QRhiGraphicsPipeline::TargetBlend blend;
         blend.enable = true;
-        blend.srcColor = QRhiGraphicsPipeline::SrcAlpha;
+        // Premultiplied alpha (matches imgui.frag). Would not be needed if we
+        // only cared about outputting to the window (the common case), but
+        // once going through a texture (Item layer, ShaderEffect) which is
+        // then sampled by Quick, the result wouldn't be correct otherwise.
+        blend.srcColor = QRhiGraphicsPipeline::One;
         blend.dstColor = QRhiGraphicsPipeline::OneMinusSrcAlpha;
-        blend.srcAlpha = QRhiGraphicsPipeline::OneMinusSrcAlpha;
-        blend.dstAlpha = QRhiGraphicsPipeline::Zero;
+        blend.srcAlpha = QRhiGraphicsPipeline::One;
+        blend.dstAlpha = QRhiGraphicsPipeline::OneMinusSrcAlpha;
         m_ps->setTargetBlends({ blend });
         m_ps->setCullMode(QRhiGraphicsPipeline::None);
         m_ps->setDepthTest(true);
