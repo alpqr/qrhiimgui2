@@ -15,5 +15,7 @@ void ImguiItem::frame()
     ImGui::SetNextWindowPos(ImVec2(200, 200), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(400, 200), ImGuiCond_FirstUseEver);
     ImGui::Begin("Test");
+    char s[512];
+    ImGui::InputText("input", s, sizeof(s));
     ImGui::End();
 }

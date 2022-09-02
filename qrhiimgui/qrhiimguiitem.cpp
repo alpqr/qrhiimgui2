@@ -7,6 +7,7 @@
 #include <QtQuick/qquickwindow.h>
 #include <QtGui/qimage.h>
 #include <QtGui/qmatrix4x4.h>
+#include <QtGui/qclipboard.h>
 
 #include "imgui.h"
 
@@ -170,6 +171,18 @@ void QRhiImguiItemPrivate::nextImguiFrame()
     }
 }
 
+static const char *getClipboardText(void *)
+{
+    static QByteArray contents;
+    contents = QGuiApplication::clipboard()->text().toUtf8();
+    return contents.constData();
+}
+
+static void setClipboardText(void *, const char *text)
+{
+    QGuiApplication::clipboard()->setText(QString::fromUtf8(text));
+}
+
 void QRhiImguiItemPrivate::updateInput()
 {
     if (!ImGui::GetCurrentContext())
@@ -179,6 +192,9 @@ void QRhiImguiItemPrivate::updateInput()
 
     if (!inputInitialized) {
         inputInitialized = true;
+
+        io.GetClipboardTextFn = getClipboardText;
+        io.SetClipboardTextFn = setClipboardText;
 
         io.KeyMap[ImGuiKey_Tab] = MAPSPECKEY(Qt::Key_Tab);
         io.KeyMap[ImGuiKey_LeftArrow] = MAPSPECKEY(Qt::Key_Left);
