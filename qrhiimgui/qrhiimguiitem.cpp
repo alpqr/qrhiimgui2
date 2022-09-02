@@ -18,11 +18,6 @@ static_assert(sizeof(ImDrawIdx) == 4);
 
 QT_BEGIN_NAMESPACE
 
-// allow mapping the range Qt::Key_Escape..Qt::Key_PageDown
-#define FIRSTSPECKEY (0x01000000)
-#define LASTSPECKEY (0x01000017)
-#define MAPSPECKEY(k) ((k) - FIRSTSPECKEY + 256)
-
 struct QRhiImguiItemPrivate
 {
     QRhiImguiItem *q;
@@ -30,22 +25,25 @@ struct QRhiImguiItemPrivate
     QMetaObject::Connection windowConn;
     QRhiImguiNode::StaticRenderData sf;
     QRhiImguiNode::FrameRenderData f;
-
-    bool inputInitialized = false;
-    QPointF mousePos;
-    Qt::MouseButtons mouseButtonsDown = Qt::NoButton;
-    float mouseWheel = 0;
-    Qt::KeyboardModifiers modifiers = Qt::NoModifier;
-    bool keyDown[256 + (LASTSPECKEY - FIRSTSPECKEY + 1)] = {};
-    QString keyText;
-
+    Qt::MouseButtons pressedMouseButtons;
     bool showDemoWindow = true;
 
     QRhiImguiItemPrivate(QRhiImguiItem *item) : q(item) { }
     void nextImguiFrame();
-    void updateInput();
     void processEvent(QEvent *event);
 };
+
+static const char *getClipboardText(void *)
+{
+    static QByteArray contents;
+    contents = QGuiApplication::clipboard()->text().toUtf8();
+    return contents.constData();
+}
+
+static void setClipboardText(void *, const char *text)
+{
+    QGuiApplication::clipboard()->setText(QString::fromUtf8(text));
+}
 
 QRhiImguiItem::QRhiImguiItem(QQuickItem *parent)
     : QQuickItem(parent),
@@ -63,6 +61,9 @@ QRhiImguiItem::QRhiImguiItem(QQuickItem *parent)
     const QImage wrapperImg(const_cast<const uchar *>(pixels), w, h, QImage::Format_RGBA8888);
     d->sf.fontTextureData = wrapperImg.copy();
     io.Fonts->SetTexID(reinterpret_cast<ImTextureID>(quintptr(0)));
+
+    io.GetClipboardTextFn = getClipboardText;
+    io.SetClipboardTextFn = setClipboardText;
 }
 
 QRhiImguiItem::~QRhiImguiItem()
@@ -102,7 +103,6 @@ void QRhiImguiItem::itemChange(QQuickItem::ItemChange change, const QQuickItem::
             d->window = window();
             d->windowConn = connect(d->window, &QQuickWindow::afterAnimating, d->window, [this] {
                 if (isVisible()) {
-                    d->updateInput();
                     d->nextImguiFrame();
                     update();
                 }
@@ -171,114 +171,252 @@ void QRhiImguiItemPrivate::nextImguiFrame()
     }
 }
 
-static const char *getClipboardText(void *)
+static void updateKeyboardModifiers(Qt::KeyboardModifiers modifiers)
 {
-    static QByteArray contents;
-    contents = QGuiApplication::clipboard()->text().toUtf8();
-    return contents.constData();
+    ImGuiIO &io(ImGui::GetIO());
+    io.AddKeyEvent(ImGuiKey_ModCtrl, modifiers.testFlag(Qt::ControlModifier));
+    io.AddKeyEvent(ImGuiKey_ModShift, modifiers.testFlag(Qt::ShiftModifier));
+    io.AddKeyEvent(ImGuiKey_ModAlt, modifiers.testFlag(Qt::AltModifier));
+    io.AddKeyEvent(ImGuiKey_ModSuper, modifiers.testFlag(Qt::MetaModifier));
 }
 
-static void setClipboardText(void *, const char *text)
+static ImGuiKey mapKey(int k)
 {
-    QGuiApplication::clipboard()->setText(QString::fromUtf8(text));
-}
-
-void QRhiImguiItemPrivate::updateInput()
-{
-    if (!ImGui::GetCurrentContext())
-        return;
-
-    ImGuiIO &io = ImGui::GetIO();
-
-    if (!inputInitialized) {
-        inputInitialized = true;
-
-        io.GetClipboardTextFn = getClipboardText;
-        io.SetClipboardTextFn = setClipboardText;
-
-        io.KeyMap[ImGuiKey_Tab] = MAPSPECKEY(Qt::Key_Tab);
-        io.KeyMap[ImGuiKey_LeftArrow] = MAPSPECKEY(Qt::Key_Left);
-        io.KeyMap[ImGuiKey_RightArrow] = MAPSPECKEY(Qt::Key_Right);
-        io.KeyMap[ImGuiKey_UpArrow] = MAPSPECKEY(Qt::Key_Up);
-        io.KeyMap[ImGuiKey_DownArrow] = MAPSPECKEY(Qt::Key_Down);
-        io.KeyMap[ImGuiKey_PageUp] = MAPSPECKEY(Qt::Key_PageUp);
-        io.KeyMap[ImGuiKey_PageDown] = MAPSPECKEY(Qt::Key_PageDown);
-        io.KeyMap[ImGuiKey_Home] = MAPSPECKEY(Qt::Key_Home);
-        io.KeyMap[ImGuiKey_End] = MAPSPECKEY(Qt::Key_End);
-        io.KeyMap[ImGuiKey_Delete] = MAPSPECKEY(Qt::Key_Delete);
-        io.KeyMap[ImGuiKey_Backspace] = MAPSPECKEY(Qt::Key_Backspace);
-        io.KeyMap[ImGuiKey_Enter] = MAPSPECKEY(Qt::Key_Return);
-        io.KeyMap[ImGuiKey_Escape] = MAPSPECKEY(Qt::Key_Escape);
-
-        // just to make Ctrl+A and such working, should be extended
-        io.KeyMap[ImGuiKey_A] = Qt::Key_A;
-        io.KeyMap[ImGuiKey_C] = Qt::Key_C;
-        io.KeyMap[ImGuiKey_V] = Qt::Key_V;
-        io.KeyMap[ImGuiKey_X] = Qt::Key_X;
-        io.KeyMap[ImGuiKey_Y] = Qt::Key_Y;
-        io.KeyMap[ImGuiKey_Z] = Qt::Key_Z;
+    switch (k) {
+    case Qt::Key_Space:
+        return ImGuiKey_Space;
+    case Qt::Key_Apostrophe:
+        return ImGuiKey_Apostrophe;
+    case Qt::Key_Comma:
+        return ImGuiKey_Comma;
+    case Qt::Key_Minus:
+        return ImGuiKey_Minus;
+    case Qt::Key_Period:
+        return ImGuiKey_Period;
+    case Qt::Key_Slash:
+        return ImGuiKey_Slash;
+    case Qt::Key_0:
+        return ImGuiKey_0;
+    case Qt::Key_1:
+        return ImGuiKey_1;
+    case Qt::Key_2:
+        return ImGuiKey_2;
+    case Qt::Key_3:
+        return ImGuiKey_3;
+    case Qt::Key_4:
+        return ImGuiKey_4;
+    case Qt::Key_5:
+        return ImGuiKey_5;
+    case Qt::Key_6:
+        return ImGuiKey_6;
+    case Qt::Key_7:
+        return ImGuiKey_8;
+    case Qt::Key_8:
+        return ImGuiKey_8;
+    case Qt::Key_9:
+        return ImGuiKey_9;
+    case Qt::Key_Semicolon:
+        return ImGuiKey_Semicolon;
+    case Qt::Key_Equal:
+        return ImGuiKey_Equal;
+    case Qt::Key_A:
+        return ImGuiKey_A;
+    case Qt::Key_B:
+        return ImGuiKey_B;
+    case Qt::Key_C:
+        return ImGuiKey_C;
+    case Qt::Key_D:
+        return ImGuiKey_D;
+    case Qt::Key_E:
+        return ImGuiKey_E;
+    case Qt::Key_F:
+        return ImGuiKey_F;
+    case Qt::Key_G:
+        return ImGuiKey_G;
+    case Qt::Key_H:
+        return ImGuiKey_H;
+    case Qt::Key_I:
+        return ImGuiKey_I;
+    case Qt::Key_J:
+        return ImGuiKey_J;
+    case Qt::Key_K:
+        return ImGuiKey_K;
+    case Qt::Key_L:
+        return ImGuiKey_L;
+    case Qt::Key_M:
+        return ImGuiKey_M;
+    case Qt::Key_N:
+        return ImGuiKey_N;
+    case Qt::Key_O:
+        return ImGuiKey_O;
+    case Qt::Key_P:
+        return ImGuiKey_P;
+    case Qt::Key_Q:
+        return ImGuiKey_Q;
+    case Qt::Key_R:
+        return ImGuiKey_R;
+    case Qt::Key_S:
+        return ImGuiKey_S;
+    case Qt::Key_T:
+        return ImGuiKey_T;
+    case Qt::Key_U:
+        return ImGuiKey_U;
+    case Qt::Key_V:
+        return ImGuiKey_V;
+    case Qt::Key_W:
+        return ImGuiKey_W;
+    case Qt::Key_X:
+        return ImGuiKey_X;
+    case Qt::Key_Y:
+        return ImGuiKey_Y;
+    case Qt::Key_Z:
+        return ImGuiKey_Z;
+    case Qt::Key_BracketLeft:
+        return ImGuiKey_LeftBracket;
+    case Qt::Key_Backslash:
+        return ImGuiKey_Backslash;
+    case Qt::Key_BracketRight:
+        return ImGuiKey_RightBracket;
+    case Qt::Key_QuoteLeft:
+        return ImGuiKey_GraveAccent;
+    case Qt::Key_Escape:
+        return ImGuiKey_Escape;
+    case Qt::Key_Tab:
+        return ImGuiKey_Tab;
+    case Qt::Key_Backspace:
+        return ImGuiKey_Backspace;
+    case Qt::Key_Return:
+    case Qt::Key_Enter:
+        return ImGuiKey_Enter;
+    case Qt::Key_Insert:
+        return ImGuiKey_Insert;
+    case Qt::Key_Delete:
+        return ImGuiKey_Delete;
+    case Qt::Key_Pause:
+        return ImGuiKey_Pause;
+    case Qt::Key_Print:
+        return ImGuiKey_PrintScreen;
+    case Qt::Key_Home:
+        return ImGuiKey_Home;
+    case Qt::Key_End:
+        return ImGuiKey_End;
+    case Qt::Key_Left:
+        return ImGuiKey_LeftArrow;
+    case Qt::Key_Up:
+        return ImGuiKey_UpArrow;
+    case Qt::Key_Right:
+        return ImGuiKey_RightArrow;
+    case Qt::Key_Down:
+        return ImGuiKey_DownArrow;
+    case Qt::Key_PageUp:
+        return ImGuiKey_PageUp;
+    case Qt::Key_PageDown:
+        return ImGuiKey_PageDown;
+    case Qt::Key_Shift:
+        return ImGuiKey_LeftShift;
+    case Qt::Key_Control:
+        return ImGuiKey_LeftCtrl;
+    case Qt::Key_Meta:
+        return ImGuiKey_LeftSuper;
+    case Qt::Key_Alt:
+        return ImGuiKey_LeftAlt;
+    case Qt::Key_CapsLock:
+        return ImGuiKey_CapsLock;
+    case Qt::Key_NumLock:
+        return ImGuiKey_NumLock;
+    case Qt::Key_ScrollLock:
+        return ImGuiKey_ScrollLock;
+    case Qt::Key_F1:
+        return ImGuiKey_F1;
+    case Qt::Key_F2:
+        return ImGuiKey_F2;
+    case Qt::Key_F3:
+        return ImGuiKey_F3;
+    case Qt::Key_F4:
+        return ImGuiKey_F4;
+    case Qt::Key_F5:
+        return ImGuiKey_F5;
+    case Qt::Key_F6:
+        return ImGuiKey_F6;
+    case Qt::Key_F7:
+        return ImGuiKey_F7;
+    case Qt::Key_F8:
+        return ImGuiKey_F8;
+    case Qt::Key_F9:
+        return ImGuiKey_F9;
+    case Qt::Key_F10:
+        return ImGuiKey_F10;
+    case Qt::Key_F11:
+        return ImGuiKey_F11;
+    case Qt::Key_F12:
+        return ImGuiKey_F12;
+    default:
+        break;
     }
-
-    io.MousePos = ImVec2(mousePos.x(), mousePos.y());
-
-    io.MouseDown[0] = mouseButtonsDown.testFlag(Qt::LeftButton);
-    io.MouseDown[1] = mouseButtonsDown.testFlag(Qt::RightButton);
-    io.MouseDown[2] = mouseButtonsDown.testFlag(Qt::MiddleButton);
-
-    io.MouseWheel = mouseWheel;
-    mouseWheel = 0;
-
-    io.KeyCtrl = modifiers.testFlag(Qt::ControlModifier);
-    io.KeyShift = modifiers.testFlag(Qt::ShiftModifier);
-    io.KeyAlt = modifiers.testFlag(Qt::AltModifier);
-    io.KeySuper = modifiers.testFlag(Qt::MetaModifier);
-
-    memcpy(io.KeysDown, keyDown, sizeof(keyDown));
-
-    if (!keyText.isEmpty()) {
-        for (const QChar &c : qAsConst(keyText)) {
-            ImWchar u = c.unicode();
-            if (u)
-                io.AddInputCharacter(u);
-        }
-        keyText.clear();
-    }
+    return ImGuiKey_None;
 }
 
 void QRhiImguiItemPrivate::processEvent(QEvent *event)
 {
+    ImGuiIO &io(ImGui::GetIO());
+
     switch (event->type()) {
     case QEvent::MouseButtonPress:
-    case QEvent::MouseMove:
+    {
+        QMouseEvent *me = static_cast<QMouseEvent *>(event);
+        updateKeyboardModifiers(me->modifiers());
+        Qt::MouseButtons buttons = me->buttons();
+        if (buttons.testFlag(Qt::LeftButton) && !pressedMouseButtons.testFlag(Qt::LeftButton))
+            io.AddMouseButtonEvent(0, true);
+        if (buttons.testFlag(Qt::RightButton) && !pressedMouseButtons.testFlag(Qt::RightButton))
+            io.AddMouseButtonEvent(1, true);
+        if (buttons.testFlag(Qt::MiddleButton) && !pressedMouseButtons.testFlag(Qt::MiddleButton))
+            io.AddMouseButtonEvent(2, true);
+        pressedMouseButtons = buttons;
+   }
+        break;
+
     case QEvent::MouseButtonRelease:
     {
         QMouseEvent *me = static_cast<QMouseEvent *>(event);
-        mousePos = me->position();
-        mouseButtonsDown = me->buttons();
-        modifiers = me->modifiers();
+        Qt::MouseButtons buttons = me->buttons();
+        if (!buttons.testFlag(Qt::LeftButton) && pressedMouseButtons.testFlag(Qt::LeftButton))
+            io.AddMouseButtonEvent(0, false);
+        if (!buttons.testFlag(Qt::RightButton) && pressedMouseButtons.testFlag(Qt::RightButton))
+            io.AddMouseButtonEvent(1, false);
+        if (!buttons.testFlag(Qt::MiddleButton) && pressedMouseButtons.testFlag(Qt::MiddleButton))
+            io.AddMouseButtonEvent(2, false);
+        pressedMouseButtons = buttons;
+    }
+        break;
+
+    case QEvent::MouseMove:
+    {
+        QMouseEvent *me = static_cast<QMouseEvent *>(event);
+        const QPointF pos = me->position();
+        io.AddMousePosEvent(pos.x(), pos.y());
     }
         break;
 
     case QEvent::Wheel:
     {
         QWheelEvent *we = static_cast<QWheelEvent *>(event);
-        mouseWheel += we->angleDelta().y() / 120.0f;
+        QPointF wheel(we->angleDelta().x() / 120.0f, we->angleDelta().y() / 120.0f);
+        io.AddMouseWheelEvent(wheel.x(), wheel.y());
     }
         break;
 
     case QEvent::KeyPress:
     case QEvent::KeyRelease:
     {
-        const bool down = event->type() == QEvent::KeyPress;
         QKeyEvent *ke = static_cast<QKeyEvent *>(event);
-        modifiers = ke->modifiers();
-        if (down)
-            keyText.append(ke->text());
-        int k = ke->key();
-        if (k <= 0xFF)
-            keyDown[k] = down;
-        else if (k >= FIRSTSPECKEY && k <= LASTSPECKEY)
-            keyDown[MAPSPECKEY(k)] = down;
+        const bool down = event->type() == QEvent::KeyPress;
+        updateKeyboardModifiers(ke->modifiers());
+        io.AddKeyEvent(mapKey(ke->key()), down);
+        if (down && !ke->text().isEmpty()) {
+            const QByteArray text = ke->text().toUtf8();
+            io.AddInputCharactersUTF8(text.constData());
+        }
     }
         break;
 
