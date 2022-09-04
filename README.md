@@ -1,4 +1,4 @@
-New integration of Qt Quick and Dear ImGui.
+New integration of Qt Quick and Dear ImGui. Requires Qt 6.4 or newer.
 
 - This now hides the Qt Quick threading model completely, and is a QQuickItem,
 meaning proper input event processing (keyboard focus, stacking order for mouse
