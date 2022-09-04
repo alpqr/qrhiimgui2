@@ -1,17 +1,19 @@
-New integration of Qt Quick and Dear ImGui. Requires Qt 6.5 (the dev branch at
-the time of writing).
+New integration of Qt Quick and Dear ImGui.
 
 - This now hides the Qt Quick threading model completely, and is a QQuickItem,
 meaning proper input event processing (keyboard focus, stacking order for mouse
 events, etc.).
 
 - The Qt Quick scenegraph integration happens via QSGRenderNode, which we now
-try to use in the most optimal way (i.e. so that it won't auto-disable the
-renderer's opaque pass, but sadly we can only do this with Qt 6.5+), while
-getting proper stacking with other items in the scene.
+try to use in the most optimal way, while getting proper stacking with other
+items in the scene. (it won't implicitly disable the renderer's opaque pass as
+rendernodes traditionally would, but this is only available with Qt 6.5 and
+newer; whereas with older Qt 6 versions it all will still work, just slightly
+less optimally)
 
 - Unlike earlier attempts, the item size and the window device pixel ratio are
-respected as well. (NB scaling the item or rotating around any axis will lead
+respected as well. (NB following the item geometry and transform is still
+limited by design, e.g. scaling the item or rotating around any axis will lead
 to incorrect scissoring)
 
 - Applications can subclass QRhiImguiItem, reimplement frame() to do ImGui

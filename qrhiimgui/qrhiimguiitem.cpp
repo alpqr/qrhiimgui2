@@ -11,6 +11,12 @@
 
 QT_BEGIN_NAMESPACE
 
+// QSGRenderNode::projectionMatrix() is only in 6.5+, earlier versions only
+// have it in the RenderState and that's not available in prepare()
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+#define WELL_BEHAVING_DEPTH 1
+#endif
+
 struct QRhiImguiNode : public QSGRenderNode
 {
     QRhiImguiNode(QQuickWindow *m_window);
@@ -55,7 +61,16 @@ void QRhiImguiNode::prepare()
     QRhiRenderTarget *rt = d->m_rt.rt;
     QRhiCommandBuffer *cb = d->m_rt.cb;
 
+#if WELL_BEHAVING_DEPTH
     const QMatrix4x4 mvp = *projectionMatrix() * *matrix();
+#else
+    QMatrix4x4 mvp = rhi->clipSpaceCorrMatrix();
+    const QSize outputSize = rt->pixelSize();
+    const float dpr = rt->devicePixelRatio();
+    mvp.ortho(0, outputSize.width() / dpr, outputSize.height() / dpr, 0, 1, -1);
+    mvp *= *matrix();
+#endif
+
     const float opacity = inheritedOpacity();
 
     renderer->prepare(rhi, rt, cb, mvp, opacity);
@@ -77,11 +92,13 @@ QSGRenderNode::RenderingFlags QRhiImguiNode::flags() const
     // with QRhi.
     QSGRenderNode::RenderingFlags result = NoExternalRendering;
 
+#if WELL_BEHAVING_DEPTH
     // If we take the projectionMatrix() adjustments into account then can
     // report DepthAwareRendering and so QQ will not disable the opaque pass.
     // (otherwise a visible QRhiImguiNode forces all batches to be part of the
     // back-to-front no-depth-write pass -> less optimal)
     result |= DepthAwareRendering;
+#endif
 
     return result;
 }
