@@ -1,29 +1,19 @@
 // Copyright (C) 2022 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
-#ifndef QRHIIMGUINODE_P_H
-#define QRHIIMGUINODE_P_H
+#ifndef QRHIIMGUI_P_H
+#define QRHIIMGUI_P_H
 
-#include <QtQuick/qsgrendernode.h>
 #include <QtGui/private/qrhi_p.h>
 
 QT_BEGIN_NAMESPACE
 
-class QQuickWindow;
+class QEvent;
 
-class QRhiImguiNode : public QSGRenderNode
+class QRhiImguiRenderer
 {
 public:
-    QRhiImguiNode(QQuickWindow *m_window);
-    ~QRhiImguiNode();
-
-    void prepare() override;
-    void render(const RenderState *state) override;
-    void releaseResources() override;
-    StateFlags changedStates() const override;
-    RenderingFlags flags() const override;
-
-    void doReleaseResources();
+    ~QRhiImguiRenderer();
 
     struct CmdListBuffer {
         quint32 offset;
@@ -52,12 +42,17 @@ public:
         QSize outputPixelSize;
     };
 
-    QQuickWindow *m_window;
+    StaticRenderData sf;
+    FrameRenderData f;
+
+    void prepare(QRhi *rhi, QRhiRenderTarget *rt, QRhiCommandBuffer *cb, const QMatrix4x4 &mvp, float opacity);
+    void render();
+    void releaseResources();
+
+private:
     QRhi *m_rhi = nullptr;
     QRhiRenderTarget *m_rt = nullptr;
     QRhiCommandBuffer *m_cb = nullptr;
-    StaticRenderData sf;
-    FrameRenderData f;
 
     std::unique_ptr<QRhiBuffer> m_vbuf;
     std::unique_ptr<QRhiBuffer> m_ibuf;
@@ -72,6 +67,23 @@ public:
         QRhiShaderResourceBindings *srb = nullptr;
     };
     QVector<Texture> m_textures;
+};
+
+class QRhiImgui
+{
+public:
+    QRhiImgui();
+    ~QRhiImgui();
+
+    using FrameFunc = std::function<void()>;
+    void nextFrame(const QSizeF &logicalOutputSize, float dpr, const QPointF &logicalOffset, FrameFunc frameFunc);
+    void syncRenderer(QRhiImguiRenderer *renderer);
+    void processEvent(QEvent *e);
+
+private:
+    QRhiImguiRenderer::StaticRenderData sf;
+    QRhiImguiRenderer::FrameRenderData f;
+    Qt::MouseButtons pressedMouseButtons;
 };
 
 QT_END_NAMESPACE

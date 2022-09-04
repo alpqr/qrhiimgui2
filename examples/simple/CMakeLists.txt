@@ -18,10 +18,10 @@ set(imgui_sources
 )
 
 set(qrhiimgui_sources
+    ../../qrhiimgui/qrhiimgui.cpp
+    ../../qrhiimgui/qrhiimgui_p.h
     ../../qrhiimgui/qrhiimguiitem.cpp
     ../../qrhiimgui/qrhiimguiitem.h
-    ../../qrhiimgui/qrhiimguinode.cpp
-    ../../qrhiimgui/qrhiimguinode_p.h
 )
 
 qt_add_executable(simple
