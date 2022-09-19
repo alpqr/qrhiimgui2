@@ -1,0 +1,11 @@
+set(imgui_sources
+    ${imgui_base}/imgui/imgui.cpp
+    ${imgui_base}/imgui/imgui_draw.cpp
+    ${imgui_base}/imgui/imgui_tables.cpp
+    ${imgui_base}/imgui/imgui_widgets.cpp
+    ${imgui_base}/imgui/imgui_demo.cpp
+    ${imgui_base}/qrhiimgui.cpp
+    ${imgui_base}/qrhiimgui_p.h
+    ${imgui_base}/qrhiimguiitem.cpp
+    ${imgui_base}/qrhiimguiitem.h
+)

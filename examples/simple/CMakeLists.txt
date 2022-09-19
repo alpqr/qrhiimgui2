@@ -9,31 +9,14 @@ find_package(Qt6 COMPONENTS Gui)
 find_package(Qt6 COMPONENTS Quick)
 find_package(Qt6 COMPONENTS ShaderTools)
 
-set(imgui_sources
-    ../../imgui/imgui.cpp
-    ../../imgui/imgui_draw.cpp
-    ../../imgui/imgui_tables.cpp
-    ../../imgui/imgui_widgets.cpp
-    ../../imgui/imgui_demo.cpp
-)
-
-set(qrhiimgui_sources
-    ../../qrhiimgui/qrhiimgui.cpp
-    ../../qrhiimgui/qrhiimgui_p.h
-    ../../qrhiimgui/qrhiimguiitem.cpp
-    ../../qrhiimgui/qrhiimguiitem.h
-)
+set(imgui_target simple)
+set(imgui_base ../../imgui)
+include(${imgui_base}/imguipre.cmakeinc)
 
 qt_add_executable(simple
     main.cpp
-    imguiitem.cpp imguiitem.h
+    imguiitem.h
     ${imgui_sources}
-    ${qrhiimgui_sources}
-)
-
-target_include_directories(simple PUBLIC
-    ../../imgui
-    ../../qrhiimgui
 )
 
 target_link_libraries(simple PUBLIC
@@ -55,12 +38,4 @@ qt_add_qml_module(simple
 TARGET_COMPILE_DEFINITIONS(simple
   PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>)
 
-qt6_add_shaders(simple "imgui_shaders"
-    PREFIX
-        "/"
-    BASE
-        "../../qrhiimgui"
-    FILES
-        "../../qrhiimgui/imgui.vert"
-        "../../qrhiimgui/imgui.frag"
-)
+include(${imgui_base}/imguipost.cmakeinc)

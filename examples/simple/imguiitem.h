@@ -12,9 +12,11 @@ class ImguiItem : public QRhiImguiItem
     QML_NAMED_ELEMENT(Imgui)
 
 public:
-    void frame() override;
-
-private:
+    QVector<std::function<void()>> callbacks;
+    void frame() override {
+        for (auto &f : callbacks)
+            f();
+    }
 };
 
 #endif

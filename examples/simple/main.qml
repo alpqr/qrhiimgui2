@@ -22,6 +22,7 @@ Item {
             z: ztimer.running ? 1 : 0
             Imgui {
                 id: gui
+                objectName: "gui"
                 anchors.fill: parent
                 SequentialAnimation on opacity {
                     id: opacityAnim
