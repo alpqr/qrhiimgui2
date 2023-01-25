@@ -78,7 +78,9 @@ public:
     using FrameFunc = std::function<void()>;
     void nextFrame(const QSizeF &logicalOutputSize, float dpr, const QPointF &logicalOffset, FrameFunc frameFunc);
     void syncRenderer(QRhiImguiRenderer *renderer);
-    void processEvent(QEvent *e);
+    bool processEvent(QEvent *e);
+
+    void rebuildFontAtlas();
 
 private:
     QRhiImguiRenderer::StaticRenderData sf;

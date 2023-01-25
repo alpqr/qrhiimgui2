@@ -118,6 +118,12 @@ void QRhiImguiRenderer::prepare(QRhi *rhi, QRhiRenderTarget *rt, QRhiCommandBuff
         Texture fontTex;
         fontTex.image = sf.fontTextureData;
         m_textures.append(fontTex);
+    } else if (!sf.fontTextureData.isNull()) {
+        Texture fontTex;
+        fontTex.image = sf.fontTextureData;
+        delete m_textures[0].tex;
+        delete m_textures[0].srb;
+        m_textures[0] = fontTex;
     }
 
     for (int i = 0; i < m_textures.count(); ++i) {
@@ -128,6 +134,7 @@ void QRhiImguiRenderer::prepare(QRhi *rhi, QRhiRenderTarget *rt, QRhiCommandBuff
             if (!t.tex->create())
                 return;
             u->uploadTexture(t.tex, t.image);
+            t.image = QImage();
         }
         if (!t.srb) {
             t.srb = m_rhi->newShaderResourceBindings();
@@ -243,15 +250,8 @@ static void setClipboardText(void *, const char *text)
 QRhiImgui::QRhiImgui()
 {
     ImGui::CreateContext();
+    rebuildFontAtlas();
     ImGuiIO &io(ImGui::GetIO());
-
-    unsigned char *pixels;
-    int w, h;
-    io.Fonts->GetTexDataAsRGBA32(&pixels, &w, &h);
-    const QImage wrapperImg(const_cast<const uchar *>(pixels), w, h, QImage::Format_RGBA8888);
-    sf.fontTextureData = wrapperImg.copy();
-    io.Fonts->SetTexID(reinterpret_cast<ImTextureID>(quintptr(0)));
-
     io.GetClipboardTextFn = getClipboardText;
     io.SetClipboardTextFn = setClipboardText;
 }
@@ -259,6 +259,17 @@ QRhiImgui::QRhiImgui()
 QRhiImgui::~QRhiImgui()
 {
     ImGui::DestroyContext();
+}
+
+void QRhiImgui::rebuildFontAtlas()
+{
+    unsigned char *pixels;
+    int w, h;
+    ImGuiIO &io(ImGui::GetIO());
+    io.Fonts->GetTexDataAsRGBA32(&pixels, &w, &h);
+    const QImage wrapperImg(const_cast<const uchar *>(pixels), w, h, QImage::Format_RGBA8888);
+    sf.fontTextureData = wrapperImg.copy();
+    io.Fonts->SetTexID(reinterpret_cast<ImTextureID>(quintptr(0)));
 }
 
 void QRhiImgui::nextFrame(const QSizeF &logicalOutputSize, float dpr, const QPointF &logicalOffset, FrameFunc frameFunc)
@@ -323,6 +334,7 @@ void QRhiImgui::nextFrame(const QSizeF &logicalOutputSize, float dpr, const QPoi
 void QRhiImgui::syncRenderer(QRhiImguiRenderer *renderer)
 {
     renderer->sf = sf;
+    sf.fontTextureData = QImage();
     renderer->f = std::move(f);
 }
 
@@ -511,7 +523,7 @@ static ImGuiKey mapKey(int k)
     return ImGuiKey_None;
 }
 
-void QRhiImgui::processEvent(QEvent *event)
+bool QRhiImgui::processEvent(QEvent *event)
 {
     ImGuiIO &io(ImGui::GetIO());
 
@@ -529,7 +541,7 @@ void QRhiImgui::processEvent(QEvent *event)
             io.AddMouseButtonEvent(2, true);
         pressedMouseButtons = buttons;
    }
-        break;
+        return true;
 
     case QEvent::MouseButtonRelease:
     {
@@ -543,7 +555,7 @@ void QRhiImgui::processEvent(QEvent *event)
             io.AddMouseButtonEvent(2, false);
         pressedMouseButtons = buttons;
     }
-        break;
+        return true;
 
     case QEvent::MouseMove:
     {
@@ -551,7 +563,7 @@ void QRhiImgui::processEvent(QEvent *event)
         const QPointF pos = me->position();
         io.AddMousePosEvent(pos.x(), pos.y());
     }
-        break;
+        return true;
 
     case QEvent::Wheel:
     {
@@ -559,7 +571,7 @@ void QRhiImgui::processEvent(QEvent *event)
         QPointF wheel(we->angleDelta().x() / 120.0f, we->angleDelta().y() / 120.0f);
         io.AddMouseWheelEvent(wheel.x(), wheel.y());
     }
-        break;
+        return true;
 
     case QEvent::KeyPress:
     case QEvent::KeyRelease:
@@ -573,11 +585,13 @@ void QRhiImgui::processEvent(QEvent *event)
             io.AddInputCharactersUTF8(text.constData());
         }
     }
-        break;
+        return true;
 
     default:
         break;
     }
+
+    return false;
 }
 
 QT_END_NAMESPACE
