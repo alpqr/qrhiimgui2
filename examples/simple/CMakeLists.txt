@@ -9,15 +9,15 @@ find_package(Qt6 COMPONENTS Gui)
 find_package(Qt6 COMPONENTS Quick)
 find_package(Qt6 COMPONENTS ShaderTools)
 
-set(imgui_target simple)
-set(imgui_base ../../imgui)
-include(${imgui_base}/imguipre.cmakeinc)
-
 qt_add_executable(simple
     main.cpp
     imguiitem.h
-    ${imgui_sources}
 )
+
+set(imgui_base ../../imgui)
+set(imgui_target simple)
+include(${imgui_base}/imgui.cmakeinc)
+include(${imgui_base}/imguiquick.cmakeinc)
 
 target_link_libraries(simple PUBLIC
     Qt::Core
@@ -37,5 +37,3 @@ qt_add_qml_module(simple
 
 TARGET_COMPILE_DEFINITIONS(simple
   PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>)
-
-include(${imgui_base}/imguipost.cmakeinc)

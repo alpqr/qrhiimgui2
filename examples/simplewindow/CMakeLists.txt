@@ -9,40 +9,17 @@ find_package(Qt6 COMPONENTS Gui)
 find_package(Qt6 COMPONENTS Quick)
 find_package(Qt6 COMPONENTS ShaderTools)
 
-set(imgui_base ../../imgui)
-set(imgui_sources
-    ${imgui_base}/imgui/imgui.cpp
-    ${imgui_base}/imgui/imgui_draw.cpp
-    ${imgui_base}/imgui/imgui_tables.cpp
-    ${imgui_base}/imgui/imgui_widgets.cpp
-    ${imgui_base}/imgui/imgui_demo.cpp
-    ${imgui_base}/qrhiimgui.cpp
-    ${imgui_base}/qrhiimgui_p.h
-)
-
 qt_add_executable(simplewindow
     main.cpp
-    ${imgui_sources}
 )
+
+set(imgui_base ../../imgui)
+set(imgui_target simplewindow)
+include(${imgui_base}/imgui.cmakeinc)
 
 target_link_libraries(simplewindow PUBLIC
     Qt::Core
     Qt::GuiPrivate
-)
-
-target_include_directories(simplewindow PRIVATE
-    ${imgui_base}
-    ${imgui_base}/imgui
-)
-
-qt6_add_shaders(simplewindow "imgui_shaders"
-    PREFIX
-        "/"
-    BASE
-        ${imgui_base}
-    FILES
-        ${imgui_base}/imgui.vert
-        ${imgui_base}/imgui.frag
 )
 
 qt6_add_shaders(simplewindow "shaders"

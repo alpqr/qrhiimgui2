@@ -1,0 +1,4 @@
+target_sources(${imgui_target} PRIVATE
+    ${imgui_base}/qrhiimguiitem.cpp
+    ${imgui_base}/qrhiimguiitem.h
+)
