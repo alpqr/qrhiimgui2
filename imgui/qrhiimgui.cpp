@@ -63,8 +63,6 @@ void QRhiImguiRenderer::prepare(QRhi *rhi, QRhiRenderTarget *rt, QRhiCommandBuff
     m_rt = rt;
     m_cb = cb;
 
-    QRhiResourceUpdateBatch *u = m_rhi->nextResourceUpdateBatch();
-
     if (!m_vbuf) {
         m_vbuf.reset(m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::VertexBuffer, f.totalVbufSize));
         m_vbuf->setName(QByteArrayLiteral("imgui vertex buffer"));
@@ -97,15 +95,6 @@ void QRhiImguiRenderer::prepare(QRhi *rhi, QRhiRenderTarget *rt, QRhiCommandBuff
             return;
     }
 
-    for (const CmdListBuffer &b : f.vbuf)
-        u->updateDynamicBuffer(m_vbuf.get(), b.offset, b.data.size(), b.data.constData());
-
-    for (const CmdListBuffer &b : f.ibuf)
-        u->updateDynamicBuffer(m_ibuf.get(), b.offset, b.data.size(), b.data.constData());
-
-    u->updateDynamicBuffer(m_ubuf.get(), 0, 64, mvp.constData());
-    u->updateDynamicBuffer(m_ubuf.get(), 64, 4, &opacity);
-
     if (!m_sampler) {
         m_sampler.reset(m_rhi->newSampler(QRhiSampler::Linear, QRhiSampler::Linear, QRhiSampler::None,
                                           QRhiSampler::Repeat, QRhiSampler::Repeat));
@@ -126,6 +115,7 @@ void QRhiImguiRenderer::prepare(QRhi *rhi, QRhiRenderTarget *rt, QRhiCommandBuff
         m_textures[0] = fontTex;
     }
 
+    QVarLengthArray<int, 8> texturesNeedUpdate;
     for (int i = 0; i < m_textures.count(); ++i) {
         Texture &t(m_textures[i]);
         if (!t.tex) {
@@ -133,8 +123,7 @@ void QRhiImguiRenderer::prepare(QRhi *rhi, QRhiRenderTarget *rt, QRhiCommandBuff
             t.tex->setName(QByteArrayLiteral("imgui texture ") + QByteArray::number(i));
             if (!t.tex->create())
                 return;
-            u->uploadTexture(t.tex, t.image);
-            t.image = QImage();
+            texturesNeedUpdate.append(i);
         }
         if (!t.srb) {
             t.srb = m_rhi->newShaderResourceBindings();
@@ -153,6 +142,13 @@ void QRhiImguiRenderer::prepare(QRhi *rhi, QRhiRenderTarget *rt, QRhiCommandBuff
         m_ps.reset();
 
     if (!m_ps) {
+        QShader vs = getShader(QLatin1String(":/imgui.vert.qsb"));
+        QShader fs = getShader(QLatin1String(":/imgui.frag.qsb"));
+        if (!vs.isValid() || !fs.isValid()) {
+            qWarning("Failed to load imgui shaders");
+            return;
+        }
+
         m_ps.reset(m_rhi->newGraphicsPipeline());
         QRhiGraphicsPipeline::TargetBlend blend;
         blend.enable = true;
@@ -171,10 +167,6 @@ void QRhiImguiRenderer::prepare(QRhi *rhi, QRhiRenderTarget *rt, QRhiCommandBuff
         m_ps->setDepthWrite(false);
         m_ps->setFlags(QRhiGraphicsPipeline::UsesScissor);
 
-        QShader vs = getShader(QLatin1String(":/imgui.vert.qsb"));
-        Q_ASSERT(vs.isValid());
-        QShader fs = getShader(QLatin1String(":/imgui.frag.qsb"));
-        Q_ASSERT(fs.isValid());
         m_ps->setShaderStages({
             { QRhiShaderStage::Vertex, vs },
             { QRhiShaderStage::Fragment, fs }
@@ -199,12 +191,29 @@ void QRhiImguiRenderer::prepare(QRhi *rhi, QRhiRenderTarget *rt, QRhiCommandBuff
             return;
     }
 
+    QRhiResourceUpdateBatch *u = m_rhi->nextResourceUpdateBatch();
+
+    for (const CmdListBuffer &b : f.vbuf)
+        u->updateDynamicBuffer(m_vbuf.get(), b.offset, b.data.size(), b.data.constData());
+
+    for (const CmdListBuffer &b : f.ibuf)
+        u->updateDynamicBuffer(m_ibuf.get(), b.offset, b.data.size(), b.data.constData());
+
+    u->updateDynamicBuffer(m_ubuf.get(), 0, 64, mvp.constData());
+    u->updateDynamicBuffer(m_ubuf.get(), 64, 4, &opacity);
+
+    for (int i = 0; i < texturesNeedUpdate.count(); ++i) {
+        Texture &t(m_textures[texturesNeedUpdate[i]]);
+        u->uploadTexture(t.tex, t.image);
+        t.image = QImage();
+    }
+
     m_cb->resourceUpdate(u);
 }
 
 void QRhiImguiRenderer::render()
 {
-    if (!m_rhi || f.draw.isEmpty())
+    if (!m_rhi || f.draw.isEmpty() || !m_ps)
         return;
 
     m_cb->setGraphicsPipeline(m_ps.get());
