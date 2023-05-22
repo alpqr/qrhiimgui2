@@ -5,22 +5,8 @@
 #include <QCommandLineParser>
 #include <QWindow>
 #include <QPlatformSurfaceEvent>
-#include <QFile>
-#include <QtGui/private/qshader_p.h>
-#include <QtGui/private/qrhinull_p.h>
-#if QT_CONFIG(opengl)
-#include <QtGui/private/qrhigles2_p.h>
 #include <QOffscreenSurface>
-#endif
-#if QT_CONFIG(vulkan)
-#include <QtGui/private/qrhivulkan_p.h>
-#endif
-#ifdef Q_OS_WIN
-#include <QtGui/private/qrhid3d11_p.h>
-#endif
-#if defined(Q_OS_MACOS) || defined(Q_OS_IOS)
-#include <QtGui/private/qrhimetal_p.h>
-#endif
+#include <QFile>
 
 #include "qrhiimgui_p.h"
 #include "imgui.h"
@@ -163,7 +149,7 @@ bool Window::event(QEvent *e)
 
 void Window::init()
 {
-    QRhi::Flags rhiFlags = QRhi::EnableDebugMarkers | QRhi::EnableProfiling;
+    QRhi::Flags rhiFlags = QRhi::EnableDebugMarkers | QRhi::EnableTimestamps;
 
     if (m_graphicsApi == QRhi::Null) {
         QRhiNullInitParams params;
