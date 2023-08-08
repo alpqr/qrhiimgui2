@@ -19,7 +19,6 @@ public:
     void sync(QRhiImguiRenderer *renderer) override;
 
 private:
-    QVector<std::function<void()>> m_callbacks;
     QRhiTexture *m_texture = nullptr;
     int m_textureUnscaledWidth = 0;
     int m_textureUnscaledHeight = 0;
