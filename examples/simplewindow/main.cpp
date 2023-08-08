@@ -8,7 +8,7 @@
 #include <QOffscreenSurface>
 #include <QFile>
 
-#include "qrhiimgui_p.h"
+#include "qrhiimgui.h"
 #include "imgui.h"
 
 static float vertexData[] = {
