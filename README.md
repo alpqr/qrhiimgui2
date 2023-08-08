@@ -1,9 +1,5 @@
 New integration of Qt Quick and Dear ImGui. Requires Qt 6.4 or newer.
 
-For Qt 6.6 (i.e., the current 'dev' branch of qtbase) use the 6.6 branch.
-There the QRhi headers are semi-public, and one can just include <rhi/qrhi.h>
-and there are no API-specific separate headers (qrhivulkan_p.h etc.) anymore.
-
 - This now hides the Qt Quick threading model completely, and is a QQuickItem,
 meaning proper input event processing (keyboard focus, stacking order for mouse
 events, etc.).

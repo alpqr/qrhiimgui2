@@ -4,7 +4,28 @@
 #ifndef QRHIIMGUI_H
 #define QRHIIMGUI_H
 
+#include <qglobal.h>
+
+#if QT_VERSION_MAJOR > 6 || QT_VERSION_MINOR >= 6
 #include <rhi/qrhi.h>
+#else
+#include <QtGui/private/qrhi_p.h>
+#include <QtGui/private/qshader_p.h>
+#include <QtGui/private/qrhinull_p.h>
+#if QT_CONFIG(opengl)
+#include <QtGui/private/qrhigles2_p.h>
+#include <QtGui/qoffscreensurface.h>
+#endif
+#if QT_CONFIG(vulkan)
+#include <QtGui/private/qrhivulkan_p.h>
+#endif
+#ifdef Q_OS_WIN
+#include <QtGui/private/qrhid3d11_p.h>
+#endif
+#if defined(Q_OS_MACOS) || defined(Q_OS_IOS)
+#include <QtGui/private/qrhimetal_p.h>
+#endif
+#endif
 
 QT_BEGIN_NAMESPACE
 

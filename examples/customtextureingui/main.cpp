@@ -32,8 +32,14 @@ void ImguiItem::sync(QRhiImguiRenderer *renderer)
 
     if (!m_texture) {
         QQuickWindow *w = window();
+#if QT_VERSION_MAJOR > 6 || QT_VERSION_MINOR >= 6
         QRhi *rhi = w->rhi();
         QRhiSwapChain *swapchain = w->swapChain();
+#else
+        QSGRendererInterface *rif = w->rendererInterface();
+        QRhi *rhi = static_cast<QRhi *>(rif->getResource(w, QSGRendererInterface::RhiResource));
+        QRhiSwapChain *swapchain = static_cast<QRhiSwapChain *>(rif->getResource(w, QSGRendererInterface::RhiSwapchainResource));
+#endif
         if (rhi && swapchain) {
             m_texture = rhi->newTexture(QRhiTexture::RGBA8, QSize(512, 512), 1, QRhiTexture::RenderTarget);
             if (m_texture->create()) {
