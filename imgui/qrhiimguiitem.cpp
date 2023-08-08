@@ -163,6 +163,8 @@ void QRhiImguiItem::itemChange(QQuickItem::ItemChange change, const QQuickItem::
                                      mapToScene(QPointF(0, 0)),
                                      [this] { frame(); });
                     update();
+                    if (!d->window->isSceneGraphInitialized())
+                        d->window->update();
                 }
             });
         }
