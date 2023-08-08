@@ -7,8 +7,6 @@ Rectangle {
     color: "lightGray"
 
     Imgui {
-        id: gui
-        objectName: "gui"
         anchors.fill: parent
     }
 }
