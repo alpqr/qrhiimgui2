@@ -6,7 +6,6 @@ set(CMAKE_AUTOMOC ON)
 
 find_package(Qt6 COMPONENTS Core)
 find_package(Qt6 COMPONENTS Gui)
-find_package(Qt6 COMPONENTS Quick)
 find_package(Qt6 COMPONENTS ShaderTools)
 
 qt_add_executable(simplewindow

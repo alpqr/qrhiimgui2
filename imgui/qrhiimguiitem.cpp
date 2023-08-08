@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
 #include "qrhiimguiitem.h"
-#include "qrhiimgui_p.h"
+#include "qrhiimgui.h"
 #include <QtGui/qguiapplication.h>
 #include <QtQuick/qquickwindow.h>
 #include <QtQuick/private/qsgrendernode_p.h>
@@ -143,6 +143,8 @@ QSGNode *QRhiImguiItem::updatePaintNode(QSGNode *node, QQuickItem::UpdatePaintNo
 
     d->gui.syncRenderer(n->renderer);
 
+    sync(n->renderer);
+
     n->markDirty(QSGNode::DirtyMaterial);
     return n;
 }
@@ -163,6 +165,8 @@ void QRhiImguiItem::itemChange(QQuickItem::ItemChange change, const QQuickItem::
                                      mapToScene(QPointF(0, 0)),
                                      [this] { frame(); });
                     update();
+                    if (!d->window->isSceneGraphInitialized())
+                        d->window->update();
                 }
             });
         }
@@ -228,6 +232,10 @@ void QRhiImguiItem::touchEvent(QTouchEvent *event)
 void QRhiImguiItem::frame()
 {
     ImGui::ShowDemoWindow(&d->showDemoWindow);
+}
+
+void QRhiImguiItem::sync(QRhiImguiRenderer *)
+{
 }
 
 QT_END_NAMESPACE

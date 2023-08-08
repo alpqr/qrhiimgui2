@@ -5,24 +5,10 @@
 #include <QCommandLineParser>
 #include <QWindow>
 #include <QPlatformSurfaceEvent>
-#include <QFile>
-#include <QtGui/private/qshader_p.h>
-#include <QtGui/private/qrhinull_p.h>
-#if QT_CONFIG(opengl)
-#include <QtGui/private/qrhigles2_p.h>
 #include <QOffscreenSurface>
-#endif
-#if QT_CONFIG(vulkan)
-#include <QtGui/private/qrhivulkan_p.h>
-#endif
-#ifdef Q_OS_WIN
-#include <QtGui/private/qrhid3d11_p.h>
-#endif
-#if defined(Q_OS_MACOS) || defined(Q_OS_IOS)
-#include <QtGui/private/qrhimetal_p.h>
-#endif
+#include <QFile>
 
-#include "qrhiimgui_p.h"
+#include "qrhiimgui.h"
 #include "imgui.h"
 
 static float vertexData[] = {
@@ -108,6 +94,9 @@ Window::Window(QRhi::Implementation graphicsApi)
         setSurfaceType(VulkanSurface);
         break;
     case QRhi::D3D11:
+#if QT_VERSION_MAJOR > 6 || QT_VERSION_MINOR >= 6
+    case QRhi::D3D12:
+#endif
         setSurfaceType(Direct3DSurface);
         break;
     case QRhi::Metal:
@@ -163,7 +152,13 @@ bool Window::event(QEvent *e)
 
 void Window::init()
 {
-    QRhi::Flags rhiFlags = QRhi::EnableDebugMarkers | QRhi::EnableProfiling;
+    QRhi::Flags rhiFlags = QRhi::EnableDebugMarkers
+#if QT_VERSION_MAJOR > 6 || QT_VERSION_MINOR >= 6
+                           | QRhi::EnableTimestamps
+#else
+                           | QRhi::EnableProfiling
+#endif
+        ;
 
     if (m_graphicsApi == QRhi::Null) {
         QRhiNullInitParams params;
@@ -195,6 +190,13 @@ void Window::init()
         params.enableDebugLayer = true;
         m_rhi.reset(QRhi::create(QRhi::D3D11, &params, rhiFlags));
     }
+#if QT_VERSION_MAJOR > 6 || QT_VERSION_MINOR >= 6
+    else if (m_graphicsApi == QRhi::D3D12) {
+        QRhiD3D12InitParams params;
+        params.enableDebugLayer = true;
+        m_rhi.reset(QRhi::create(QRhi::D3D12, &params, rhiFlags));
+    }
+#endif
 #endif
 
 #if defined(Q_OS_MACOS) || defined(Q_OS_IOS)
@@ -398,6 +400,10 @@ static QString graphicsApiName(QRhi::Implementation graphicsApi)
         return QLatin1String("Vulkan");
     case QRhi::D3D11:
         return QLatin1String("Direct3D 11");
+#if QT_VERSION_MAJOR > 6 || QT_VERSION_MINOR >= 6
+    case QRhi::D3D12:
+        return QLatin1String("Direct3D 12");
+#endif
     case QRhi::Metal:
         return QLatin1String("Metal");
     default:
@@ -429,8 +435,12 @@ int main(int argc, char **argv)
     cmdLineParser.addOption(glOption);
     QCommandLineOption vkOption({ "v", "vulkan" }, QLatin1String("Vulkan"));
     cmdLineParser.addOption(vkOption);
-    QCommandLineOption d3dOption({ "d", "d3d11" }, QLatin1String("Direct3D 11"));
-    cmdLineParser.addOption(d3dOption);
+    QCommandLineOption d3d11Option({ "d", "d3d11" }, QLatin1String("Direct3D 11"));
+    cmdLineParser.addOption(d3d11Option);
+#if QT_VERSION_MAJOR > 6 || QT_VERSION_MINOR >= 6
+    QCommandLineOption d3d12Option({ "D", "d3d12" }, QLatin1String("Direct3D 12"));
+    cmdLineParser.addOption(d3d12Option);
+#endif
     QCommandLineOption mtlOption({ "m", "metal" }, QLatin1String("Metal"));
     cmdLineParser.addOption(mtlOption);
 
@@ -441,8 +451,12 @@ int main(int argc, char **argv)
         graphicsApi = QRhi::OpenGLES2;
     if (cmdLineParser.isSet(vkOption))
         graphicsApi = QRhi::Vulkan;
-    if (cmdLineParser.isSet(d3dOption))
+    if (cmdLineParser.isSet(d3d11Option))
         graphicsApi = QRhi::D3D11;
+#if QT_VERSION_MAJOR > 6 || QT_VERSION_MINOR >= 6
+    if (cmdLineParser.isSet(d3d12Option))
+        graphicsApi = QRhi::D3D12;
+#endif
     if (cmdLineParser.isSet(mtlOption))
         graphicsApi = QRhi::Metal;
 

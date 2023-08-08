@@ -1,10 +1,31 @@
 // Copyright (C) 2022 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
-#ifndef QRHIIMGUI_P_H
-#define QRHIIMGUI_P_H
+#ifndef QRHIIMGUI_H
+#define QRHIIMGUI_H
 
+#include <qglobal.h>
+
+#if QT_VERSION_MAJOR > 6 || QT_VERSION_MINOR >= 6
+#include <rhi/qrhi.h>
+#else
 #include <QtGui/private/qrhi_p.h>
+#include <QtGui/private/qshader_p.h>
+#include <QtGui/private/qrhinull_p.h>
+#if QT_CONFIG(opengl)
+#include <QtGui/private/qrhigles2_p.h>
+#include <QtGui/qoffscreensurface.h>
+#endif
+#if QT_CONFIG(vulkan)
+#include <QtGui/private/qrhivulkan_p.h>
+#endif
+#ifdef Q_OS_WIN
+#include <QtGui/private/qrhid3d11_p.h>
+#endif
+#if defined(Q_OS_MACOS) || defined(Q_OS_IOS)
+#include <QtGui/private/qrhimetal_p.h>
+#endif
+#endif
 
 QT_BEGIN_NAMESPACE
 
@@ -22,7 +43,7 @@ public:
 
     struct DrawCmd {
         int cmdListBufferIdx;
-        int textureIndex;
+        void *textureId;
         quint32 indexOffset;
         quint32 elemCount;
         QPointF itemPixelOffset;
@@ -45,9 +66,23 @@ public:
     StaticRenderData sf;
     FrameRenderData f;
 
-    void prepare(QRhi *rhi, QRhiRenderTarget *rt, QRhiCommandBuffer *cb, const QMatrix4x4 &mvp, float opacity);
+    void prepare(QRhi *rhi,
+                 QRhiRenderTarget *rt,
+                 QRhiCommandBuffer *cb,
+                 const QMatrix4x4 &mvp,
+                 float opacity = 1.0f,
+                 float hdrWhiteLevelMultiplierOrZeroForSDRsRGB = 0.0f);
     void render();
     void releaseResources();
+
+    enum CustomTextureOwnership {
+        TakeCustomTextureOwnership,
+        NoCustomTextureOwnership
+    };
+    void registerCustomTexture(void *id,
+                               QRhiTexture *texture,
+                               QRhiSampler::Filter filter,
+                               CustomTextureOwnership ownership);
 
 private:
     QRhi *m_rhi = nullptr;
@@ -59,14 +94,17 @@ private:
     std::unique_ptr<QRhiBuffer> m_ubuf;
     std::unique_ptr<QRhiGraphicsPipeline> m_ps;
     QVector<quint32> m_renderPassFormat;
-    std::unique_ptr<QRhiSampler> m_sampler;
+    std::unique_ptr<QRhiSampler> m_linearSampler;
+    std::unique_ptr<QRhiSampler> m_nearestSampler;
 
     struct Texture {
         QImage image;
         QRhiTexture *tex = nullptr;
         QRhiShaderResourceBindings *srb = nullptr;
+        QRhiSampler::Filter filter = QRhiSampler::Linear;
+        bool ownTex = true;
     };
-    QVector<Texture> m_textures;
+    QHash<void *, Texture> m_textures;
 };
 
 class QRhiImgui
