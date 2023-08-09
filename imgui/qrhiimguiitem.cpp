@@ -238,4 +238,9 @@ void QRhiImguiItem::sync(QRhiImguiRenderer *)
 {
 }
 
+QRhiImgui *QRhiImguiItem::imgui()
+{
+    return &d->gui;
+}
+
 QT_END_NAMESPACE

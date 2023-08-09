@@ -9,6 +9,7 @@
 QT_BEGIN_NAMESPACE
 
 struct QRhiImguiItemPrivate;
+class QRhiImgui;
 class QRhiImguiRenderer;
 
 class QRhiImguiItem : public QQuickItem
@@ -21,6 +22,8 @@ public:
 
     virtual void frame();
     virtual void sync(QRhiImguiRenderer *renderer);
+
+    QRhiImgui *imgui();
 
 private:
     QSGNode *updatePaintNode(QSGNode *, UpdatePaintNodeData *) override;

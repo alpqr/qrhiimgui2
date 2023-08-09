@@ -14,7 +14,6 @@
 #include <QtGui/private/qrhinull_p.h>
 #if QT_CONFIG(opengl)
 #include <QtGui/private/qrhigles2_p.h>
-#include <QtGui/qoffscreensurface.h>
 #endif
 #if QT_CONFIG(vulkan)
 #include <QtGui/private/qrhivulkan_p.h>
@@ -119,6 +118,7 @@ public:
     bool processEvent(QEvent *e);
 
     void rebuildFontAtlas();
+    void rebuildFontAtlasWithFont(const QString &filename);
 
 private:
     QRhiImguiRenderer::StaticRenderData sf;

@@ -32,6 +32,8 @@ qt6_add_shaders(simplewindow "shaders"
 qt6_add_resources(simplewindow "resources"
     PREFIX
         "/"
+    BASE
+        "../shared"
     FILES
-        fonts/RobotoMono-Medium.ttf
+        "../shared/fonts/RobotoMono-Medium.ttf"
 )

@@ -320,6 +320,21 @@ void QRhiImgui::rebuildFontAtlas()
     io.Fonts->SetTexID(nullptr);
 }
 
+void QRhiImgui::rebuildFontAtlasWithFont(const QString &filename)
+{
+    QFile f(filename);
+    if (!f.open(QIODevice::ReadOnly)) {
+        qWarning("Failed to open %s", qPrintable(filename));
+        return;
+    }
+    QByteArray font = f.readAll();
+    ImFontConfig fontCfg;
+    fontCfg.FontDataOwnedByAtlas = false;
+    ImGui::GetIO().Fonts->Clear();
+    ImGui::GetIO().Fonts->AddFontFromMemoryTTF(font.data(), font.size(), 20.0f, &fontCfg);
+    rebuildFontAtlas();
+}
+
 void QRhiImgui::nextFrame(const QSizeF &logicalOutputSize, float dpr, const QPointF &logicalOffset, FrameFunc frameFunc)
 {
     ImGuiIO &io(ImGui::GetIO());

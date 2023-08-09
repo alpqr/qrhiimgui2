@@ -17,22 +17,10 @@ static float vertexData[] = {
      0.5f,  -0.5f,   0.0f, 0.0f, 1.0f,
 };
 
-static QByteArray getResource(const QString &name)
-{
-    QFile f(name);
-    if (f.open(QIODevice::ReadOnly))
-        return f.readAll();
-
-    return QByteArray();
-}
-
 static QShader getShader(const QString &name)
 {
     QFile f(name);
-    if (f.open(QIODevice::ReadOnly))
-        return QShader::fromSerialized(f.readAll());
-
-    return QShader();
+    return f.open(QIODevice::ReadOnly) ? QShader::fromSerialized(f.readAll()) : QShader();
 }
 
 struct Window : public QWindow
@@ -219,12 +207,7 @@ void Window::init()
     m_rp.reset(m_sc->newCompatibleRenderPassDescriptor());
     m_sc->setRenderPassDescriptor(m_rp.get());
 
-    QByteArray font = getResource(QLatin1String(":/fonts/RobotoMono-Medium.ttf"));
-    ImFontConfig fontCfg;
-    fontCfg.FontDataOwnedByAtlas = false;
-    ImGui::GetIO().Fonts->Clear();
-    ImGui::GetIO().Fonts->AddFontFromMemoryTTF(font.data(), font.size(), 20.0f, &fontCfg);
-    m_imgui.rebuildFontAtlas();
+    m_imgui.rebuildFontAtlasWithFont(QLatin1String(":/fonts/RobotoMono-Medium.ttf"));
 
     m_imguiRenderer.reset(new QRhiImguiRenderer);
 

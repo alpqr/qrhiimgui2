@@ -37,3 +37,12 @@ qt_add_qml_module(customtextureingui
 
 TARGET_COMPILE_DEFINITIONS(customtextureingui
   PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>)
+
+  qt6_add_resources(customtextureingui "resources"
+    PREFIX
+        "/"
+    BASE
+        "../shared"
+    FILES
+        "../shared/fonts/RobotoMono-Medium.ttf"
+)

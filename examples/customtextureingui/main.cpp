@@ -12,6 +12,8 @@ ImguiItem::ImguiItem()
 {
     ImGuiIO &io(ImGui::GetIO());
     io.IniFilename = nullptr;
+
+    imgui()->rebuildFontAtlasWithFont(QLatin1String(":/fonts/RobotoMono-Medium.ttf"));
 }
 
 void ImguiItem::frame()
