@@ -29,6 +29,7 @@ public:
     CustomContent swPainted;
     CustomContent rhiRendered;
 
+    bool swPaintedDirty = false;
     Triangle *triangleRenderer = nullptr;
     QRhiTextureRenderTarget *triRt = nullptr;
     QRhiRenderPassDescriptor *triRpDesc = nullptr;

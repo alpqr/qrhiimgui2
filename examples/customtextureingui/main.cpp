@@ -75,6 +75,7 @@ void CustomRenderer::sync(QRhiImguiRenderer *renderer)
                                                 QRhiSampler::Linear,
                                                 QRhiImguiRenderer::TakeCustomTextureOwnership);
                 swPainted.dpr = window->effectiveDevicePixelRatio();
+                swPaintedDirty = true;
             }
         }
         if (!rhiRendered.texture) {
@@ -109,38 +110,37 @@ void CustomRenderer::render()
     if (!rhi || !swapchain)
         return;
 
-    // ----- swPainted ----- (draw with QPainter into a QImage -> upload to QRhiTexture)
-
-    QImage img(swPainted.texture->pixelSize(), QImage::Format_RGBA8888);
-    img.setDevicePixelRatio(swPainted.dpr);
-
-    const int textureUnscaledWidth = img.width() / swPainted.dpr;
-    const int textureUnscaledHeight = img.height() / swPainted.dpr;
-
-    QPainter p(&img);
-    p.fillRect(0, 0, textureUnscaledWidth, textureUnscaledHeight, Qt::red);
-    QFont font;
-    font.setPointSize(16);
-    p.setFont(font);
-    p.drawText(10, 50, QLatin1String("Hello world with QPainter in a texture"));
-    QPen pen(Qt::yellow);
-    pen.setWidth(4);
-    p.setPen(pen);
-    p.drawRect(0, 0, textureUnscaledWidth - 1, textureUnscaledHeight - 1);
-    p.end();
-
     QRhiCommandBuffer *cb = swapchain->currentFrameCommandBuffer();
-    QRhiResourceUpdateBatch *u = rhi->nextResourceUpdateBatch();
-    u->uploadTexture(swPainted.texture, img);
-    cb->resourceUpdate(u);
 
-    // ----- rhiRendered ----- (render with QRhi into the QRhiTexture)
+    if (swPaintedDirty) {
+        swPaintedDirty = false;
+        QImage img(swPainted.texture->pixelSize(), QImage::Format_RGBA8888);
+        img.setDevicePixelRatio(swPainted.dpr);
+
+        const int textureUnscaledWidth = img.width() / swPainted.dpr;
+        const int textureUnscaledHeight = img.height() / swPainted.dpr;
+
+        QPainter p(&img);
+        p.fillRect(0, 0, textureUnscaledWidth, textureUnscaledHeight, Qt::red);
+        QFont font;
+        font.setPointSize(16);
+        p.setFont(font);
+        p.drawText(10, 50, QLatin1String("Hello world with QPainter in a texture"));
+        QPen pen(Qt::yellow);
+        pen.setWidth(4);
+        p.setPen(pen);
+        p.drawRect(0, 0, textureUnscaledWidth - 1, textureUnscaledHeight - 1);
+        p.end();
+
+        QRhiResourceUpdateBatch *u = rhi->nextResourceUpdateBatch();
+        u->uploadTexture(swPainted.texture, img);
+        cb->resourceUpdate(u);
+    }
 
     if (!triangleRenderer) {
         triangleRenderer = new Triangle;
         triangleRenderer->init(rhi, cb, triRpDesc);
     }
-
     triangleRenderer->render(cb, triRt, Qt::transparent, triRotation, 1.0f);
     triRotation += 1.0f;
 }
