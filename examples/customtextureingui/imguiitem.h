@@ -7,6 +7,33 @@
 #include "qrhiimguiitem.h"
 
 class QRhiTexture;
+class QRhiTextureRenderTarget;
+class QRhiRenderPassDescriptor;
+struct Triangle;
+
+class CustomRenderer : public QRhiImguiItemCustomRenderer
+{
+public:
+    CustomRenderer(QQuickWindow *w) : window(w) { }
+    ~CustomRenderer();
+    void sync(QRhiImguiRenderer *renderer) override;
+    void render() override;
+
+    QQuickWindow *window;
+
+    struct CustomContent {
+        QRhiTexture *texture = nullptr;
+        float dpr = 0;
+    };
+
+    CustomContent swPainted;
+    CustomContent rhiRendered;
+
+    Triangle *triangleRenderer = nullptr;
+    QRhiTextureRenderTarget *triRt = nullptr;
+    QRhiRenderPassDescriptor *triRpDesc = nullptr;
+    float triRotation = 0.0f;
+};
 
 class ImguiItem : public QRhiImguiItem
 {
@@ -16,12 +43,10 @@ class ImguiItem : public QRhiImguiItem
 public:
     ImguiItem();
     void frame() override;
-    void sync(QRhiImguiRenderer *renderer) override;
+    QRhiImguiItemCustomRenderer *createCustomRenderer() override;
 
-private:
-    QRhiTexture *m_texture = nullptr;
-    int m_textureUnscaledWidth = 0;
-    int m_textureUnscaledHeight = 0;
+    CustomRenderer *cr = nullptr;
+    bool demoWindowOpen = true;
 };
 
 #endif

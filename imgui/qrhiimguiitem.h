@@ -12,6 +12,14 @@ struct QRhiImguiItemPrivate;
 class QRhiImgui;
 class QRhiImguiRenderer;
 
+class QRhiImguiItemCustomRenderer
+{
+public:
+    virtual ~QRhiImguiItemCustomRenderer();
+    virtual void sync(QRhiImguiRenderer *renderer);
+    virtual void render();
+};
+
 class QRhiImguiItem : public QQuickItem
 {
     Q_OBJECT
@@ -21,7 +29,7 @@ public:
     ~QRhiImguiItem();
 
     virtual void frame();
-    virtual void sync(QRhiImguiRenderer *renderer);
+    virtual QRhiImguiItemCustomRenderer *createCustomRenderer();
 
     QRhiImgui *imgui();
 

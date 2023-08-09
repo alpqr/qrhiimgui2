@@ -19,7 +19,7 @@ QT_BEGIN_NAMESPACE
 
 struct QRhiImguiNode : public QSGRenderNode
 {
-    QRhiImguiNode(QQuickWindow *m_window);
+    QRhiImguiNode(QQuickWindow *window, QRhiImguiItem *item);
     ~QRhiImguiNode();
 
     void prepare() override;
@@ -29,17 +29,22 @@ struct QRhiImguiNode : public QSGRenderNode
     RenderingFlags flags() const override;
 
     QQuickWindow *window;
+    QRhiImguiItem *item;
     QRhiImguiRenderer *renderer;
+    QRhiImguiItemCustomRenderer *customRenderer = nullptr;
 };
 
-QRhiImguiNode::QRhiImguiNode(QQuickWindow *window)
+QRhiImguiNode::QRhiImguiNode(QQuickWindow *window, QRhiImguiItem *item)
     : window(window),
+      item(item),
       renderer(new QRhiImguiRenderer)
 {
+    customRenderer = item->createCustomRenderer();
 }
 
 QRhiImguiNode::~QRhiImguiNode()
 {
+    delete customRenderer;
     delete renderer;
 }
 
@@ -50,12 +55,19 @@ void QRhiImguiNode::releaseResources()
 
 void QRhiImguiNode::prepare()
 {
+#if QT_VERSION_MAJOR > 6 || QT_VERSION_MINOR >= 6
+    QRhi *rhi = window->rhi();
+#else
     QSGRendererInterface *rif = window->rendererInterface();
     QRhi *rhi = static_cast<QRhi *>(rif->getResource(window, QSGRendererInterface::RhiResource));
+#endif
     if (!rhi) {
         qWarning("QRhiImguiNode: No QRhi found for window %p", window);
         return;
     }
+
+    if (customRenderer)
+        customRenderer->render();
 
     QSGRenderNodePrivate *d = QSGRenderNodePrivate::get(this);
     QRhiRenderTarget *rt = d->m_rt.rt;
@@ -139,11 +151,12 @@ QSGNode *QRhiImguiItem::updatePaintNode(QSGNode *node, QQuickItem::UpdatePaintNo
 
     QRhiImguiNode *n = static_cast<QRhiImguiNode *>(node);
     if (!n)
-        n = new QRhiImguiNode(d->window);
+        n = new QRhiImguiNode(d->window, this);
 
     d->gui.syncRenderer(n->renderer);
 
-    sync(n->renderer);
+    if (n->customRenderer)
+        n->customRenderer->sync(n->renderer);
 
     n->markDirty(QSGNode::DirtyMaterial);
     return n;
@@ -229,18 +242,39 @@ void QRhiImguiItem::touchEvent(QTouchEvent *event)
     d->gui.processEvent(event);
 }
 
+QRhiImgui *QRhiImguiItem::imgui()
+{
+    return &d->gui;
+}
+
 void QRhiImguiItem::frame()
 {
     ImGui::ShowDemoWindow(&d->showDemoWindow);
 }
 
-void QRhiImguiItem::sync(QRhiImguiRenderer *)
+QRhiImguiItemCustomRenderer *QRhiImguiItem::createCustomRenderer()
 {
+    // Called on the render thread (if there is one) with the main thread blocked.
+
+    return nullptr;
 }
 
-QRhiImgui *QRhiImguiItem::imgui()
+QRhiImguiItemCustomRenderer::~QRhiImguiItemCustomRenderer()
 {
-    return &d->gui;
+    // Called on the render thread (if there is one) when the QRhiImguiRenderer (and the scenegraph node) is going away.
+    // This is convenient to safely release QRhi* objects created in sync() and customRender().
+    // The QRhiImguiItem (living on the main thread) may or may not anymore exist at this point.
+}
+
+void QRhiImguiItemCustomRenderer::sync(QRhiImguiRenderer *)
+{
+    // Called on the render thread (if there is one) with the main thread blocked.
+}
+
+void QRhiImguiItemCustomRenderer::render()
+{
+    // Called on the render thread (if there is one) whenever the ImGui renderer is starting a new frame.
+    // Called with a frame being recorded, but without an active render pass.
 }
 
 QT_END_NAMESPACE

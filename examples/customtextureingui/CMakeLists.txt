@@ -12,6 +12,7 @@ find_package(Qt6 COMPONENTS ShaderTools)
 qt_add_executable(customtextureingui
     main.cpp
     imguiitem.h
+    triangle.cpp triangle.h
 )
 
 set(imgui_base ../../imgui)
@@ -38,11 +39,19 @@ qt_add_qml_module(customtextureingui
 TARGET_COMPILE_DEFINITIONS(customtextureingui
   PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>)
 
-  qt6_add_resources(customtextureingui "resources"
+qt_add_resources(customtextureingui "resources"
     PREFIX
         "/"
     BASE
         "../shared"
     FILES
         "../shared/fonts/RobotoMono-Medium.ttf"
+)
+
+qt_add_shaders(customtextureingui "shaders"
+    PREFIX
+        "/shaders"
+    FILES
+        color.vert
+        color.frag
 )
