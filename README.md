@@ -23,3 +23,5 @@ qt_add_qml_module), then instantiate somewhere in the QML scene.
 
 - Input is migrated to the new API in 1.87+. (the key code mapping table may
 still be incomplete, though)
+
+![Screenshot](screenshot.png)
