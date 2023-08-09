@@ -4,7 +4,13 @@
 #ifndef TRIANGLE_H
 #define TRIANGLE_H
 
+#include <qglobal.h>
+
+#if QT_VERSION_MAJOR > 6 || QT_VERSION_MINOR >= 6
 #include <rhi/qrhi.h>
+#else
+#include <QtGui/private/qrhi_p.h>
+#endif
 
 struct Triangle
 {

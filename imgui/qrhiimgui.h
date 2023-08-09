@@ -10,7 +10,6 @@
 #include <rhi/qrhi.h>
 #else
 #include <QtGui/private/qrhi_p.h>
-#include <QtGui/private/qshader_p.h>
 #include <QtGui/private/qrhinull_p.h>
 #if QT_CONFIG(opengl)
 #include <QtGui/private/qrhigles2_p.h>
