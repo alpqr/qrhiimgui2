@@ -158,6 +158,9 @@ void QRhiImguiRenderer::prepare(QRhi *rhi,
     if (m_ps && m_rt->renderPassDescriptor()->serializedFormat() != m_renderPassFormat)
         m_ps.reset();
 
+    if (m_ps && m_rt->sampleCount() != m_ps->sampleCount())
+        m_ps.reset();
+
     if (!m_ps) {
         QShader vs = getShader(QLatin1String(":/imgui.vert.qsb"));
         QShader fs = getShader(QLatin1String(":/imgui.frag.qsb"));
@@ -198,8 +201,8 @@ void QRhiImguiRenderer::prepare(QRhi *rhi,
             { 0, 1, QRhiVertexInputAttribute::Float2, 2 * sizeof(float) },
             { 0, 2, QRhiVertexInputAttribute::UNormByte4, 4 * sizeof(float) }
         });
-
         m_ps->setVertexInputLayout(inputLayout);
+        m_ps->setSampleCount(rt->sampleCount());
         m_ps->setShaderResourceBindings(m_textures[0].srb);
         m_ps->setRenderPassDescriptor(m_rt->renderPassDescriptor());
         m_renderPassFormat = m_rt->renderPassDescriptor()->serializedFormat();
