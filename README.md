@@ -24,8 +24,9 @@ qt_add_qml_module), then instantiate somewhere in the QML scene.
 - Input is migrated to the new API in 1.87+. (the key code mapping table may
 still be incomplete, though)
 
-- Additionally, plain QWindow applications (or, from Qt 6.7 on, QRhiWidget) are
-  supported too. See the simplewindow example.
+- Additionally, plain QWindow applications or anything that renders with QRhi
+  (e.g., from Qt 6.7 on, QRhiWidget and QQuickRhiItem) are supported too.
+  See the simplewindow and imguiinrhiwidget examples.
 
 ![Screenshot](screenshot.png)
 (screenshot of the customtextureingui example)
