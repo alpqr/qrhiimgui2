@@ -122,13 +122,15 @@ void QRhiImguiRenderer::prepare(QRhi *rhi,
         Texture fontTex;
         fontTex.image = sf.fontTextureData;
         m_textures.insert(nullptr, fontTex);
-    } else if (!sf.fontTextureData.isNull()) {
+        sf.reset();
+    } else if (sf.isValid()) {
         Texture fontTex;
         fontTex.image = sf.fontTextureData;
         Texture &fontTexEntry(m_textures[nullptr]);
         delete fontTexEntry.tex;
         delete fontTexEntry.srb;
         fontTexEntry = fontTex;
+        sf.reset();
     }
 
     QVarLengthArray<void *, 8> texturesNeedUpdate;
@@ -399,8 +401,10 @@ void QRhiImgui::nextFrame(const QSizeF &logicalOutputSize, float dpr, const QPoi
 
 void QRhiImgui::syncRenderer(QRhiImguiRenderer *renderer)
 {
-    renderer->sf = sf;
-    sf.fontTextureData = QImage();
+    if (sf.isValid()) {
+        renderer->sf = sf;
+        sf.reset();
+    }
     renderer->f = std::move(f);
 }
 

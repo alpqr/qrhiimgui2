@@ -50,6 +50,8 @@ public:
 
     struct StaticRenderData {
         QImage fontTextureData;
+        bool isValid() const { return !fontTextureData.isNull(); }
+        void reset() { fontTextureData = QImage(); }
     };
 
     struct FrameRenderData {
