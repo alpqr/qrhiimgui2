@@ -302,7 +302,8 @@ static void setClipboardText(void *, const char *text)
 
 QRhiImgui::QRhiImgui()
 {
-    ImGui::CreateContext();
+    context = ImGui::CreateContext();
+    ImGui::SetCurrentContext(static_cast<ImGuiContext *>(context));
     rebuildFontAtlas();
     ImGuiIO &io(ImGui::GetIO());
     io.GetClipboardTextFn = getClipboardText;
@@ -311,14 +312,15 @@ QRhiImgui::QRhiImgui()
 
 QRhiImgui::~QRhiImgui()
 {
-    ImGui::DestroyContext();
+    ImGui::DestroyContext(static_cast<ImGuiContext *>(context));
 }
 
 void QRhiImgui::rebuildFontAtlas()
 {
+    ImGui::SetCurrentContext(static_cast<ImGuiContext *>(context));
+    ImGuiIO &io(ImGui::GetIO());
     unsigned char *pixels;
     int w, h;
-    ImGuiIO &io(ImGui::GetIO());
     io.Fonts->GetTexDataAsRGBA32(&pixels, &w, &h);
     const QImage wrapperImg(const_cast<const uchar *>(pixels), w, h, QImage::Format_RGBA8888);
     sf.fontTextureData = wrapperImg.copy();
@@ -333,6 +335,7 @@ void QRhiImgui::rebuildFontAtlasWithFont(const QString &filename)
         return;
     }
     QByteArray font = f.readAll();
+    ImGui::SetCurrentContext(static_cast<ImGuiContext *>(context));
     ImFontConfig fontCfg;
     fontCfg.FontDataOwnedByAtlas = false;
     ImGui::GetIO().Fonts->Clear();
@@ -342,6 +345,7 @@ void QRhiImgui::rebuildFontAtlasWithFont(const QString &filename)
 
 void QRhiImgui::nextFrame(const QSizeF &logicalOutputSize, float dpr, const QPointF &logicalOffset, FrameFunc frameFunc)
 {
+    ImGui::SetCurrentContext(static_cast<ImGuiContext *>(context));
     ImGuiIO &io(ImGui::GetIO());
 
     const QPointF itemPixelOffset = logicalOffset * dpr;
@@ -595,6 +599,7 @@ static ImGuiKey mapKey(int k)
 
 bool QRhiImgui::processEvent(QEvent *event)
 {
+    ImGui::SetCurrentContext(static_cast<ImGuiContext *>(context));
     ImGuiIO &io(ImGui::GetIO());
 
     switch (event->type()) {

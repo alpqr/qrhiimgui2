@@ -122,6 +122,7 @@ public:
     void rebuildFontAtlasWithFont(const QString &filename);
 
 private:
+    void *context;
     QRhiImguiRenderer::StaticRenderData sf;
     QRhiImguiRenderer::FrameRenderData f;
     Qt::MouseButtons pressedMouseButtons;
