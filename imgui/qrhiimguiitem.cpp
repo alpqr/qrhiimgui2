@@ -5,7 +5,11 @@
 #include "qrhiimgui.h"
 #include <QtGui/qguiapplication.h>
 #include <QtQuick/qquickwindow.h>
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
+#include <QtQuick/qsgrendernode.h>
+#else
 #include <QtQuick/private/qsgrendernode_p.h>
+#endif
 
 #include "imgui.h"
 
@@ -69,9 +73,14 @@ void QRhiImguiNode::prepare()
     if (customRenderer)
         customRenderer->render();
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
+    QRhiRenderTarget *rt = renderTarget();
+    QRhiCommandBuffer *cb = commandBuffer();
+#else
     QSGRenderNodePrivate *d = QSGRenderNodePrivate::get(this);
     QRhiRenderTarget *rt = d->m_rt.rt;
     QRhiCommandBuffer *cb = d->m_rt.cb;
+#endif
 
 #if WELL_BEHAVING_DEPTH
     const QMatrix4x4 mvp = *projectionMatrix() * *matrix();
