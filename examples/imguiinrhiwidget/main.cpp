@@ -211,7 +211,7 @@ int main(int argc, char **argv)
 
     QRhiWidget::Api graphicsApi;
 #if defined(Q_OS_WIN)
-    graphicsApi = QRhiWidget::Api::D3D11;
+    graphicsApi = QRhiWidget::Api::Direct3D11;
 #elif defined(Q_OS_MACOS) || defined(Q_OS_IOS)
     graphicsApi = QRhiWidget::Api::Metal;
 #elif QT_CONFIG(vulkan)
@@ -243,9 +243,9 @@ int main(int argc, char **argv)
     if (cmdLineParser.isSet(vkOption))
         graphicsApi = QRhiWidget::Api::Vulkan;
     if (cmdLineParser.isSet(d3d11Option))
-        graphicsApi = QRhiWidget::Api::D3D11;
+        graphicsApi = QRhiWidget::Api::Direct3D11;
     if (cmdLineParser.isSet(d3d12Option))
-        graphicsApi = QRhiWidget::Api::D3D12;
+        graphicsApi = QRhiWidget::Api::Direct3D12;
     if (cmdLineParser.isSet(mtlOption))
         graphicsApi = QRhiWidget::Api::Metal;
 
