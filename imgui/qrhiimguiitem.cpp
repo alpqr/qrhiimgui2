@@ -188,7 +188,7 @@ void QRhiImguiItem::itemChange(QQuickItem::ItemChange change, const QQuickItem::
                                      [this] { frame(); });
                     update();
                     if (!d->window->isSceneGraphInitialized())
-                        d->window->update();
+                        QMetaObject::invokeMethod(this, [this] { d->window->update(); }, Qt::QueuedConnection);
                 }
             });
         }

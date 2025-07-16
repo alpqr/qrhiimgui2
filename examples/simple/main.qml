@@ -3,6 +3,16 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import ImguiExample
 
+// Rectangle {
+//     border.color: "red"
+//     border.width: 4
+//     Imgui {
+//         id: gui
+//         objectName: "gui"
+//         anchors.fill: parent
+//     }
+// }
+
 Item {
     Rectangle {
         color: "red"
