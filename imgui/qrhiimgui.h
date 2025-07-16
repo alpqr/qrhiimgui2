@@ -39,9 +39,12 @@ public:
         QByteArray data;
     };
 
+    using TextureId = unsigned long long;
+    static const TextureId FONT_TEXTURE_ID = 1;
+
     struct DrawCmd {
         int cmdListBufferIdx;
-        void *textureId;
+        TextureId textureId;
         quint32 indexOffset;
         quint32 elemCount;
         QPointF itemPixelOffset;
@@ -79,7 +82,7 @@ public:
         TakeCustomTextureOwnership,
         NoCustomTextureOwnership
     };
-    void registerCustomTexture(void *id,
+    void registerCustomTexture(TextureId id,
                                QRhiTexture *texture,
                                QRhiSampler::Filter filter,
                                CustomTextureOwnership ownership);
@@ -104,7 +107,7 @@ private:
         QRhiSampler::Filter filter = QRhiSampler::Linear;
         bool ownTex = true;
     };
-    QHash<void *, Texture> m_textures;
+    QHash<TextureId, Texture> m_textures;
 };
 
 class QRhiImgui
