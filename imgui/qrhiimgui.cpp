@@ -121,19 +121,19 @@ void QRhiImguiRenderer::prepare(QRhi *rhi,
     if (m_textures.isEmpty()) {
         Texture fontTex;
         fontTex.image = sf.fontTextureData;
-        m_textures.insert(nullptr, fontTex);
+        m_textures.insert(FONT_TEXTURE_ID, fontTex);
         sf.reset();
     } else if (sf.isValid()) {
         Texture fontTex;
         fontTex.image = sf.fontTextureData;
-        Texture &fontTexEntry(m_textures[nullptr]);
+        Texture &fontTexEntry(m_textures[FONT_TEXTURE_ID]);
         delete fontTexEntry.tex;
         delete fontTexEntry.srb;
         fontTexEntry = fontTex;
         sf.reset();
     }
 
-    QVarLengthArray<void *, 8> texturesNeedUpdate;
+    QVarLengthArray<TextureId, 8> texturesNeedUpdate;
     for (auto it = m_textures.begin(), end = m_textures.end(); it != end; ++it) {
         Texture &t(*it);
         if (!t.tex) {
@@ -205,7 +205,7 @@ void QRhiImguiRenderer::prepare(QRhi *rhi,
         });
         m_ps->setVertexInputLayout(inputLayout);
         m_ps->setSampleCount(rt->sampleCount());
-        m_ps->setShaderResourceBindings(m_textures[0].srb);
+        m_ps->setShaderResourceBindings(m_textures[FONT_TEXTURE_ID].srb);
         m_ps->setRenderPassDescriptor(m_rt->renderPassDescriptor());
         m_renderPassFormat = m_rt->renderPassDescriptor()->serializedFormat();
 
@@ -269,7 +269,7 @@ void QRhiImguiRenderer::render()
     }
 }
 
-void QRhiImguiRenderer::registerCustomTexture(void *id,
+void QRhiImguiRenderer::registerCustomTexture(TextureId id,
                                               QRhiTexture *texture,
                                               QRhiSampler::Filter filter,
                                               CustomTextureOwnership ownership)
@@ -324,7 +324,7 @@ void QRhiImgui::rebuildFontAtlas()
     io.Fonts->GetTexDataAsRGBA32(&pixels, &w, &h);
     const QImage wrapperImg(const_cast<const uchar *>(pixels), w, h, QImage::Format_RGBA8888);
     sf.fontTextureData = wrapperImg.copy();
-    io.Fonts->SetTexID(nullptr);
+    io.Fonts->SetTexID(QRhiImguiRenderer::FONT_TEXTURE_ID);
 }
 
 void QRhiImgui::rebuildFontAtlasWithFont(const QString &filename)
@@ -389,7 +389,7 @@ void QRhiImgui::nextFrame(const QSizeF &logicalOutputSize, float dpr, const QPoi
             if (!cmd->UserCallback) {
                 QRhiImguiRenderer::DrawCmd dc;
                 dc.cmdListBufferIdx = n;
-                dc.textureId = cmd->TextureId;
+                dc.textureId = cmd->GetTexID();
                 dc.indexOffset = indexOffset;
                 dc.elemCount = cmd->ElemCount;
                 dc.itemPixelOffset = itemPixelOffset;

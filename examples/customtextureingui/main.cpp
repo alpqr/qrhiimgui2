@@ -70,7 +70,7 @@ void CustomRenderer::sync(QRhiImguiRenderer *renderer)
         if (!swPainted.texture) {
             swPainted.texture = rhi->newTexture(QRhiTexture::RGBA8, QSize(512, 512));
             if (swPainted.texture->create()) {
-                renderer->registerCustomTexture(swPainted.texture,
+                renderer->registerCustomTexture(qintptr(swPainted.texture),
                                                 swPainted.texture,
                                                 QRhiSampler::Linear,
                                                 QRhiImguiRenderer::TakeCustomTextureOwnership);
@@ -81,7 +81,7 @@ void CustomRenderer::sync(QRhiImguiRenderer *renderer)
         if (!rhiRendered.texture) {
             rhiRendered.texture = rhi->newTexture(QRhiTexture::RGBA8, QSize(512, 512), 1, QRhiTexture::RenderTarget);
             if (rhiRendered.texture->create()) {
-                renderer->registerCustomTexture(rhiRendered.texture,
+                renderer->registerCustomTexture(qintptr(rhiRendered.texture),
                                                 rhiRendered.texture,
                                                 QRhiSampler::Linear,
                                                 QRhiImguiRenderer::TakeCustomTextureOwnership);
