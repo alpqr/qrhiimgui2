@@ -4,6 +4,7 @@ project(imguiinrhiwidget LANGUAGES CXX)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 
+set(QT_FIND_PRIVATE_MODULES ON)
 find_package(Qt6 COMPONENTS Core Gui Widgets ShaderTools)
 
 qt_add_executable(imguiinrhiwidget
@@ -14,7 +15,7 @@ set(imgui_base ../../imgui)
 set(imgui_target imguiinrhiwidget)
 include(${imgui_base}/imgui.cmakeinc)
 
-target_link_libraries(imguiinrhiwidget PUBLIC
+target_link_libraries(imguiinrhiwidget PRIVATE
     Qt::Core
     Qt::GuiPrivate
     Qt::Widgets

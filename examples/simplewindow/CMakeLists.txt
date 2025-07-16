@@ -4,9 +4,8 @@ project(simplewindow LANGUAGES CXX)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 
-find_package(Qt6 COMPONENTS Core)
-find_package(Qt6 COMPONENTS Gui)
-find_package(Qt6 COMPONENTS ShaderTools)
+set(QT_FIND_PRIVATE_MODULES ON)
+find_package(Qt6 COMPONENTS Core Gui ShaderTools)
 
 qt_add_executable(simplewindow
     main.cpp
@@ -16,7 +15,7 @@ set(imgui_base ../../imgui)
 set(imgui_target simplewindow)
 include(${imgui_base}/imgui.cmakeinc)
 
-target_link_libraries(simplewindow PUBLIC
+target_link_libraries(simplewindow PRIVATE
     Qt::Core
     Qt::GuiPrivate
 )

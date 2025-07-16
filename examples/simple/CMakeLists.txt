@@ -4,10 +4,8 @@ project(simple LANGUAGES CXX)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 
-find_package(Qt6 COMPONENTS Core)
-find_package(Qt6 COMPONENTS Gui)
-find_package(Qt6 COMPONENTS Quick)
-find_package(Qt6 COMPONENTS ShaderTools)
+set(QT_FIND_PRIVATE_MODULES ON)
+find_package(Qt6 COMPONENTS Core Gui Quick ShaderTools)
 
 qt_add_executable(simple
     main.cpp
@@ -19,7 +17,7 @@ set(imgui_target simple)
 include(${imgui_base}/imgui.cmakeinc)
 include(${imgui_base}/imguiquick.cmakeinc)
 
-target_link_libraries(simple PUBLIC
+target_link_libraries(simple PRIVATE
     Qt::Core
     Qt::GuiPrivate
     Qt::QuickPrivate
