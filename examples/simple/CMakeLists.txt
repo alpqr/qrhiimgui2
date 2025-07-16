@@ -4,8 +4,8 @@ project(simple LANGUAGES CXX)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 
-set(QT_FIND_PRIVATE_MODULES ON)
-find_package(Qt6 COMPONENTS Core Gui Quick ShaderTools)
+set(QT_NO_PRIVATE_MODULE_WARNING ON)
+find_package(Qt6 COMPONENTS Core Gui Quick ShaderTools OPTIONAL_COMPONENTS GuiPrivate QuickPrivate)
 
 qt_add_executable(simple
     main.cpp
@@ -17,6 +17,7 @@ set(imgui_target simple)
 include(${imgui_base}/imgui.cmakeinc)
 include(${imgui_base}/imguiquick.cmakeinc)
 
+# QuickPrivate is not actually needed for Qt >= 6.6 and can be changed to Quick
 target_link_libraries(simple PRIVATE
     Qt::Core
     Qt::GuiPrivate

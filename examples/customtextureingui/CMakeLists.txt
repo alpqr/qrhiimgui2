@@ -4,8 +4,8 @@ project(customtextureingui LANGUAGES CXX)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 
-set(QT_FIND_PRIVATE_MODULES ON)
-find_package(Qt6 COMPONENTS Core Gui Quick ShaderTools)
+set(QT_NO_PRIVATE_MODULE_WARNING ON)
+find_package(Qt6 COMPONENTS Core Gui Quick ShaderTools OPTIONAL_COMPONENTS GuiPrivate QuickPrivate)
 
 qt_add_executable(customtextureingui
     main.cpp

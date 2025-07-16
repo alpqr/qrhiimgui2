@@ -4,8 +4,8 @@ project(simplewindow LANGUAGES CXX)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 
-set(QT_FIND_PRIVATE_MODULES ON)
-find_package(Qt6 COMPONENTS Core Gui ShaderTools)
+set(QT_NO_PRIVATE_MODULE_WARNING ON)
+find_package(Qt6 COMPONENTS Core Gui ShaderTools OPTIONAL_COMPONENTS GuiPrivate)
 
 qt_add_executable(simplewindow
     main.cpp
