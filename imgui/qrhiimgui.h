@@ -40,7 +40,7 @@ public:
     };
 
     using TextureId = unsigned long long;
-    static const TextureId FONT_TEXTURE_ID = 1;
+    static constexpr TextureId FONT_TEXTURE_ID = 1;
 
     struct DrawCmd {
         int cmdListBufferIdx;
